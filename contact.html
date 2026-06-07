@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Contact the Campus Events and Navigation System team — get in touch with us."
+    />
+    <title>Contact | Campus Events &amp; Navigation System</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <!-- ===== HEADER & NAVIGATION ===== -->
+    <header class="site-header">
+      <div class="container header-inner">
+        <a href="index.html" class="site-logo" aria-label="Campus Events Home">
+          <span class="logo-icon" aria-hidden="true">🎓</span>
+          <span class="logo-text">CampusNav</span>
+        </a>
+
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <ul class="nav-list" role="list">
+            <li><a href="index.html" class="nav-link">Home</a></li>
+            <li><a href="about.html" class="nav-link">About</a></li>
+            <li><a href="contact.html" class="nav-link active" aria-current="page">Contact</a></li>
+          </ul>
+        </nav>
+
+        <button
+          class="nav-toggle"
+          id="navToggle"
+          aria-label="Toggle navigation menu"
+          aria-expanded="false"
+          aria-controls="primaryNav"
+        >
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <!-- ===== PAGE HERO ===== -->
+      <section class="page-hero" aria-labelledby="contactHeading">
+        <div class="container">
+          <h1 id="contactHeading" class="page-hero__title">Contact Us</h1>
+          <p class="page-hero__subtitle">
+            Have a question, spotted a missing event, or want to submit a venue?
+            Reach out to the team below.
+          </p>
+        </div>
+      </section>
+
+      <!-- ===== CONTACT CONTENT ===== -->
+      <section class="contact-section" aria-labelledby="formHeading">
+        <div class="container contact-grid">
+
+          <!-- Contact Form -->
+          <div class="contact-form-wrapper">
+            <h2 id="formHeading" class="contact-form__title">Send a Message</h2>
+
+            <!--
+              NOTE: GitHub Pages is static — this form does not submit to a
+              backend. Hook up a service such as Formspree, Netlify Forms, or
+              EmailJS in script.js to handle submissions.
+            -->
+            <form
+              class="contact-form"
+              id="contactForm"
+              novalidate
+              aria-label="Contact form"
+            >
+              <!-- Name -->
+              <div class="form-group">
+                <label for="contactName" class="form-label">Full Name <span aria-hidden="true">*</span></label>
+                <input
+                  type="text"
+                  id="contactName"
+                  name="name"
+                  class="form-input"
+                  placeholder="Your full name"
+                  required
+                  autocomplete="name"
+                />
+              </div>
+
+              <!-- Email -->
+              <div class="form-group">
+                <label for="contactEmail" class="form-label">Email Address <span aria-hidden="true">*</span></label>
+                <input
+                  type="email"
+                  id="contactEmail"
+                  name="email"
+                  class="form-input"
+                  placeholder="you@example.com"
+                  required
+                  autocomplete="email"
+                />
+              </div>
+
+              <!-- Subject -->
+              <div class="form-group">
+                <label for="contactSubject" class="form-label">Subject</label>
+                <input
+                  type="text"
+                  id="contactSubject"
+                  name="subject"
+                  class="form-input"
+                  placeholder="What's this about?"
+                />
+              </div>
+
+              <!-- Message -->
+              <div class="form-group">
+                <label for="contactMessage" class="form-label">Message <span aria-hidden="true">*</span></label>
+                <textarea
+                  id="contactMessage"
+                  name="message"
+                  class="form-input form-textarea"
+                  placeholder="Write your message here…"
+                  rows="6"
+                  required
+                ></textarea>
+              </div>
+
+              <button type="submit" class="btn btn--primary" id="contactSubmit">
+                Send Message
+              </button>
+
+              <!-- Success / error feedback injected by script.js -->
+              <div id="formFeedback" role="status" aria-live="polite"></div>
+            </form>
+          </div>
+
+          <!-- Contact Info -->
+          <aside class="contact-info" aria-label="Contact information">
+            <h2 class="contact-info__title">Project Details</h2>
+            <address class="contact-info__address">
+              <ul class="contact-info__list" role="list">
+                <li>
+                  <span class="contact-info__label">Group</span>
+                  <span class="contact-info__value">Cloud Lab Group</span>
+                </li>
+                <li>
+                  <span class="contact-info__label">Course</span>
+                  <span class="contact-info__value">Cloud Computing &amp; Web Technologies</span>
+                </li>
+                <li>
+                  <span class="contact-info__label">Academic Year</span>
+                  <span class="contact-info__value">2025 / 2026</span>
+                </li>
+                <li>
+                  <!-- TODO: Replace with real repository URL -->
+                  <span class="contact-info__label">Repository</span>
+                  <a
+                    href="https://github.com/"
+                    class="contact-info__value contact-info__link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >GitHub Repository ↗</a>
+                </li>
+              </ul>
+            </address>
+          </aside>
+
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div class="footer-brand">
+          <a href="index.html" class="site-logo site-logo--footer" aria-label="Campus Events Home">
+            <span class="logo-icon" aria-hidden="true">🎓</span>
+            <span class="logo-text">CampusNav</span>
+          </a>
+          <p class="footer-tagline">Connecting students to campus life, one event at a time.</p>
+        </div>
+
+        <nav class="footer-nav" aria-label="Footer navigation">
+          <h3 class="footer-nav__heading">Quick Links</h3>
+          <ul class="footer-nav__list" role="list">
+            <li><a href="index.html" class="footer-link">Home</a></li>
+            <li><a href="about.html" class="footer-link">About</a></li>
+            <li><a href="contact.html" class="footer-link">Contact</a></li>
+          </ul>
+        </nav>
+
+        <address class="footer-meta">
+          <h3 class="footer-meta__heading">Project Info</h3>
+          <ul class="footer-meta__list" role="list">
+            <li><span class="meta-label">Group:</span> <span class="meta-value">Cloud Lab Group</span></li>
+            <li><span class="meta-label">Course:</span> <span class="meta-value">Cloud Computing &amp; Web Technologies</span></li>
+            <li><span class="meta-label">Academic Year:</span> <span class="meta-value">2025 / 2026</span></li>
+          </ul>
+        </address>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="container">
+          <p class="footer-bottom__text">
+            &copy; <span id="currentYear"></span> Campus Events &amp; Navigation System.
+            Built for educational purposes.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+  </body>
+</html>
