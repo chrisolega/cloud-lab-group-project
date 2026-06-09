@@ -23,20 +23,15 @@ discover and explore campus events.
 cloud-lab-group-project/
 │
 ├── index.html          # Home page — event listing & search
-├── about.html          # About page — team & project info
+├── about.html          # About page — Detailed information about the system
 ├── contact.html        # Contact page — contact form
+|   team.html             #Team page - Details about the Team
 │
 ├── css/
 │   └── style.css       # All styles for the site
 │
 ├── js/
 │   └── script.js       # All JavaScript (event fetching, search, filters)
-│
-├── data/
-│   ├── events.json     # Campus event data (JSON array)
-│   └── venues.json     # Campus venue data (JSON array)
-│
-├── images/             # Static image assets
 │
 └── README.md           # Project documentation (this file)
 ```
@@ -62,40 +57,6 @@ VS Code extension for hot-reload during development.
 4. GitHub will publish the site at `https://<username>.github.io/<repo-name>/`.
 
 ---
-
-## 📝 Data Format
-
-### events.json
-
-Each event object should follow this schema:
-
-```json
-{
-  "id": "unique-event-id",
-  "title": "Event Title",
-  "date": "YYYY-MM-DD",
-  "time": "HH:MM",
-  "location": "Venue Name",
-  "category": "academic | social | sports | workshop",
-  "description": "Short description of the event.",
-  "image": "images/event-image.jpg"
-}
-```
-
-### venues.json
-
-Each venue object should follow this schema:
-
-```json
-{
-  "id": "unique-venue-id",
-  "name": "Venue Name",
-  "capacity": 200,
-  "building": "Building Name",
-  "mapLink": "https://maps.example.com/..."
-}
-```
-
 ---
 
 ## 👥 Team Members
@@ -108,6 +69,7 @@ Each venue object should follow this schema:
 | Team Member 2  | Role / Responsibility |
 | Team Member 3  | Role / Responsibility |
 | Team Member 4  | Role / Responsibility |
+| Team Member 5  | Role / Responsibility |
 
 ---
 
