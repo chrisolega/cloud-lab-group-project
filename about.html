@@ -1,162 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="About the Campus Events and Navigation System — our team, our mission, and the course behind the project."
-    />
-    <title>About | Campus Events &amp; Navigation System</title>
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-
-  <body>
-    <!-- ===== HEADER & NAVIGATION ===== -->
-    <header class="site-header">
-      <div class="container header-inner">
-        <a href="index.html" class="site-logo" aria-label="Campus Events Home">
-          <span class="logo-icon" aria-hidden="true">🎓</span>
-          <span class="logo-text">CampusNav</span>
-        </a>
-
-        <nav class="primary-nav" aria-label="Primary navigation">
-          <ul class="nav-list" role="list">
-            <li><a href="index.html" class="nav-link">Home</a></li>
-            <li><a href="about.html" class="nav-link active" aria-current="page">About</a></li>
-            <li><a href="contact.html" class="nav-link">Contact</a></li>
-          </ul>
-        </nav>
-
-        <button
-          class="nav-toggle"
-          id="navToggle"
-          aria-label="Toggle navigation menu"
-          aria-expanded="false"
-          aria-controls="primaryNav"
-        >
-          <span class="hamburger-bar"></span>
-          <span class="hamburger-bar"></span>
-          <span class="hamburger-bar"></span>
-        </button>
-      </div>
-    </header>
-
-    <main id="main-content">
-      <!-- ===== PAGE HERO ===== -->
-      <section class="page-hero" aria-labelledby="aboutHeading">
-        <div class="container">
-          <h1 id="aboutHeading" class="page-hero__title">About This Project</h1>
-          <p class="page-hero__subtitle">
-            Learn about the team, the mission, and the technology behind the
-            Campus Events &amp; Navigation System.
-          </p>
-        </div>
-      </section>
-
-      <!-- ===== ABOUT CONTENT ===== -->
-      <section class="about-section" aria-labelledby="missionHeading">
-        <div class="container about-grid">
-
-          <!-- Mission -->
-          <article class="about-card">
-            <h2 id="missionHeading" class="about-card__title">Our Mission</h2>
-            <p class="about-card__body">
-              The Campus Events &amp; Navigation System aims to be a single,
-              reliable hub where students, staff, and visitors can discover
-              every event happening on campus — from academic seminars and
-              sports fixtures to social socials and workshops.
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Campus Events and Navigation System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+        </ul>
+    </nav>
+    <h1>Campus Events and Navigation System</h1>
+    <p>Helping students discover events and navigate campus with ease.</p>
+</header>
+<main>
+    <section id="overview">
+        <h2>Project Overview</h2>
+        <p>
+            The Campus Events and Navigation System is a web-based application designed
+            to improve communication and engagement within a university campus. The
+            system provides students with easy access to information about upcoming
+            events while helping them locate venues and important campus facilities.
+        </p>
+        <p>
+            Many students miss valuable opportunities because event information is
+            scattered across different platforms. In addition, new students and visitors
+            often struggle to find event locations. This project addresses these
+            challenges by combining event management and navigation features in a
+            single platform.
+        </p>
+        <p>
+            By using this system, students can stay informed, participate in campus
+            activities, and navigate the campus environment more efficiently.
+        </p>
+    </section>
+    <section id="image-section">
+        <h2>Campus Environment</h2>
+        <figure>
+            <img src="images/campus.jpg" alt="Campus View">
+            <figcaption>
+                A visual representation of the campus where events and activities take place.
+            </figcaption>
+        </figure>
+    </section>
+    <section id="features">
+        <h2>System Features</h2>
+        <article>
+            <h3>Event Discovery</h3>
+            <p>
+                Browse upcoming campus events and discover activities based on interests
+                and categories.
             </p>
-          </article>
-
-          <!-- Project Info -->
-          <article class="about-card">
-            <h2 class="about-card__title">Project Overview</h2>
-            <ul class="about-card__list">
-              <li><strong>Group:</strong> Cloud Lab Group</li>
-              <li><strong>Course:</strong> Cloud Computing &amp; Web Technologies</li>
-              <li><strong>Academic Year:</strong> 2025 / 2026</li>
-              <li><strong>Platform:</strong> GitHub Pages (Static)</li>
-              <li><strong>Tech Stack:</strong> HTML5, CSS3, Vanilla JavaScript</li>
-            </ul>
-          </article>
-
-          <!-- Team -->
-          <article class="about-card about-card--wide">
-            <h2 class="about-card__title">The Team</h2>
-            <p class="about-card__body">
-              <!-- TODO: Team members to fill in their names and roles below -->
+        </article>
+        <article>
+            <h3>Event Search</h3>
+            <p>
+                Quickly find events using keywords, dates, or categories through a
+                simple search interface.
             </p>
-            <ul class="team-list">
-              <li class="team-member">
-                <span class="team-member__name">Team Member 1</span>
-                <span class="team-member__role">Role / Responsibility</span>
-              </li>
-              <li class="team-member">
-                <span class="team-member__name">Team Member 2</span>
-                <span class="team-member__role">Role / Responsibility</span>
-              </li>
-              <li class="team-member">
-                <span class="team-member__name">Team Member 3</span>
-                <span class="team-member__role">Role / Responsibility</span>
-              </li>
-              <li class="team-member">
-                <span class="team-member__name">Team Member 4</span>
-                <span class="team-member__role">Role / Responsibility</span>
-              </li>
-            </ul>
-          </article>
-
-        </div>
-      </section>
-    </main>
-
-    <!-- ===== FOOTER ===== -->
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <div class="footer-brand">
-          <a href="index.html" class="site-logo site-logo--footer" aria-label="Campus Events Home">
-            <span class="logo-icon" aria-hidden="true">🎓</span>
-            <span class="logo-text">CampusNav</span>
-          </a>
-          <p class="footer-tagline">Connecting students to campus life, one event at a time.</p>
-        </div>
-
-        <nav class="footer-nav" aria-label="Footer navigation">
-          <h3 class="footer-nav__heading">Quick Links</h3>
-          <ul class="footer-nav__list" role="list">
-            <li><a href="index.html" class="footer-link">Home</a></li>
-            <li><a href="about.html" class="footer-link">About</a></li>
-            <li><a href="contact.html" class="footer-link">Contact</a></li>
-          </ul>
-        </nav>
-
-        <address class="footer-meta">
-          <h3 class="footer-meta__heading">Project Info</h3>
-          <ul class="footer-meta__list" role="list">
-            <li><span class="meta-label">Group:</span> <span class="meta-value">Cloud Lab Group</span></li>
-            <li><span class="meta-label">Course:</span> <span class="meta-value">Cloud Computing &amp; Web Technologies</span></li>
-            <li><span class="meta-label">Academic Year:</span> <span class="meta-value">2025 / 2026</span></li>
-          </ul>
-        </address>
-      </div>
-
-      <div class="footer-bottom">
-        <div class="container">
-          <p class="footer-bottom__text">
-            &copy; <span id="currentYear"></span> Campus Events &amp; Navigation System.
-            Built for educational purposes.
-          </p>
-        </div>
-      </div>
-    </footer>
-
-    <script src="js/script.js"></script>
-  </body>
+        </article>
+        <article>
+            <h3>Interested Events</h3>
+            <p>
+                Save and manage a personalized list of events that users plan to attend.
+            </p>
+        </article>
+        <article>
+            <h3>Reminder Simulation</h3>
+            <p>
+                Demonstrates reminder functionality through notifications or JavaScript
+                alert messages.
+            </p>
+        </article>
+        <article>
+            <h3>Campus Navigation</h3>
+            <p>
+                Helps users locate event venues, lecture halls, offices, and other
+                important campus locations.
+            </p>
+        </article>
+    </section>
+    <section id="technology">
+        <h2>Technology Stack</h2>
+        <ul>
+            <li><strong>HTML5:</strong> Provides the structure of the website.</li>
+            <li><strong>CSS3:</strong> Handles styling and responsive design.</li>
+            <li><strong>JavaScript:</strong> Adds interactive functionality.</li>
+            <li><strong>JSON:</strong> Stores event and location data.</li>
+            <li><strong>GitHub Pages:</strong> Hosts and deploys the project online.</li>
+        </ul>
+    </section>
+    <section id="team">
+        <h2>Project Team</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Student ID</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Member 1</td>
+                    <td>XXXXXXXXXX</td>
+                    <td>Project Manager</td>
+                </tr>
+                <tr>
+                    <td>Member 2</td>
+                    <td>XXXXXXXXXX</td>
+                    <td>Frontend Developer</td>
+                </tr>
+                <tr>
+                    <td>Member 3</td>
+                    <td>XXXXXXXXXX</td>
+                    <td>Backend/Data Manager</td>
+                </tr>
+                <tr>
+                    <td>Member 4</td>
+                    <td>XXXXXXXXXX</td>
+                    <td>UI/UX Designer</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+<footer>
+    <p>&copy; 2026 Campus Events and Navigation System. All Rights Reserved.</p>
+</footer>
+</body>
 </html>
