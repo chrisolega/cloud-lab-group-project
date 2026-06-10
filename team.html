@@ -1,1 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+        name="description"
+        content="Meet the team behind the Campus Events and Navigation System — student developers, designers, and project managers."
+    />
+    <title>Our Team - Campus Events & Navigation System</title>
+
+    <!-- External Stylesheet (shared with index.html) -->
+    <link rel="stylesheet" href="css/style.css" />
+
+    <!-- Google Fonts (same as index.html) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    />
+</head>
+
+<body>
+    <!-- ===== HEADER & NAVIGATION (exact clone from index.html) ===== -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <!-- Site Logo / Brand -->
+            <a href="index.html" class="site-logo" aria-label="Campus Events Home">
+                <span class="logo-icon" aria-hidden="true">🎓</span>
+                <span class="logo-text">CampusNav</span>
+            </a>
+
+            <!-- Primary Navigation -->
+            <nav class="primary-nav" aria-label="Primary navigation">
+                <ul class="nav-list" role="list">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="about.html" class="nav-link">About</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="team.html" class="nav-link active" aria-current="page">Team</a></li>
+                </ul>
+            </nav>
+
+            <!-- Mobile hamburger toggle (same button, functionality handled by global app.js) -->
+            <button
+                class="nav-toggle"
+                id="navToggle"
+                aria-label="Toggle navigation menu"
+                aria-expanded="false"
+                aria-controls="primaryNav"
+            >
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+            </button>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <!-- ===== TEAM HERO SECTION (matching style of index.html but simpler) ===== -->
+        <section class="hero hero--team" aria-labelledby="teamHeroHeading">
+            <div class="container hero-inner">
+                <div class="hero-badge">👥 Meet the Developers</div>
+                <h1 id="teamHeroHeading" class="hero-title">
+                    Our Team At Cloud Lab Group
+                </h1>
+                <p class="hero-subtitle">
+                    We are a team of five dedicated students collaborating to build the Campus Events & Navigation System
+                    as part of our Introduction to Cloud Computing course.
+                </p>
+            </div>
+            <div class="hero-blob hero-blob--1" aria-hidden="true"></div>
+            <div class="hero-blob hero-blob--2" aria-hidden="true"></div>
+        </section>
+
+        <!-- ===== TEAM MEMBERS TABLE SECTION ===== -->
+        <section class="events-section" aria-labelledby="teamTableHeading">
+            <div class="container">
+                <header class="section-header">
+                    <h2 id="teamTableHeading" class="section-title">Team Members & Their Contributions</h2>
+                    <p class="section-subtitle">
+                        Each member played a vital role in designing, developing, and deploying this website.
+                    </p>
+                </header>
+
+                <!-- Table with clear border lines (using inline border attributes + CSS fallback) -->
+                <div style="overflow-x: auto; margin-bottom: 2rem;">
+                    <table class="team-table" border="1" cellpadding="12" cellspacing="0" 
+                           style="width: 100%; border-collapse: collapse; background-color: white;">
+                        <thead style="background-color: #003366; color: white;">
+                            <tr>
+                                <th>Name</th>
+                                <th>Student ID / Index</th>
+                                <th>Role</th>
+                                <th>Contributions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Christabel Addomaa Danso</strong></td>
+                                <td>2225402244</td>
+                                <td>Group Leader & Frontend Developer(team.html)</td>
+                                <td>
+                                    <ul style="margin: 0; padding-left: 1.2rem;">
+                                        <li>Christabel led the group and developed the Team page to showcase members, their roles, and contributions. 
+                                            She also coordinated tasks among members and enforced project timelines.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Christian Gift Kwesi Tetteh</strong></td>
+                                <td>2425402198</td>
+                                <td>GitHub Manager & Frontend developer(Index.html)</td>
+                                <td>
+                                    <ul style="margin: 0; padding-left: 1.2rem;">
+                                        <li>Christian created and managed the repository "cloud-lab-group-project" and added all members as collaborators. 
+                                            He also set up GitHub Pages for automatic deployment.</li>
+                                        <li>He also developed the homepage using HTML. Structured the main layout and navigation, 
+                                            ensuring proper organization of files and smooth collaboration within the team.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Yvette Ayitey</strong></td>
+                                <td>2425403936</td>
+                                <td>Frontend Developer (Contact.html)</td>
+                                <td>
+                                    <ul style="margin: 0; padding-left: 1.2rem;">
+                                        <li>Yvette created the Contact page to display communication details and a contact form. 
+                                            She ensured users can easily reach the team through a clear and well-structured layout.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Daniel Edem Edzeani</strong></td>
+                                <td>245402513</td>
+                                <td>CSS, JavaScript and JSON Developer </td>
+                                <td>
+                                    <ul style="margin: 0; padding-left: 1.2rem;">
+                                     <li>Edem was responsible for styling the website using CSS, adding interactivity with JavaScript, and managing structured data with JSON. 
+                                        He also improved design consistency, user experience, and data organization across the project.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td><strong>Julius Mortey</strong></td>
+                                <td>2425402382</td>
+                                <td>Frontend Developer (About.html)</td>
+                                <td>
+                                    <ul style="margin: 0; padding-left: 1.2rem;">
+                                        <li> Julius designed and developed the About page to present information about the project idea. 
+                                            He ensured proper structure, readability, and consistency with the overall website design.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div >
+                    <h3 style="margin-top: 0; color: #003366;">📚 Course & Lab Information</h3>
+                    <p><strong>Course:</strong> Introduction to Cloud Computing (CSBC 252)</p>
+                    <p><strong>Lecturer:</strong> Mr. Nasir Abdul Karim</p>
+                    <p><strong>Teaching Assistant:</strong> Mr .....</p>
+                    <p><strong>Academic Year:</strong> 2025/2026 – Semester 2</p>
+                    <p><strong>Submission Deadline:</strong> 11th June, 2026</p>
+                    <p><strong>Repository:</strong> <a href="https://github.com/chrisolega/cloud-lab-group-project" target="_blank"> Repository</a></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <!-- Brand column -->
+            <div class="footer-brand">
+                <a href="index.html" class="site-logo site-logo--footer" aria-label="Campus Events Home">
+                    <span class="logo-icon" aria-hidden="true">🎓</span>
+                    <span class="logo-text">CampusNav</span>
+                </a>
+                <p class="footer-tagline">
+                    Connecting students to campus life, one event at a time.
+                </p>
+            </div>
+
+            <!-- Quick links -->
+            <nav class="footer-nav" aria-label="Footer navigation">
+                <h3 class="footer-nav__heading">Quick Links</h3>
+                <ul class="footer-nav__list" role="list">
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="about.html" class="footer-link">About</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                    <li><a href="team.html" class="footer-link">Team</a></li>
+                </ul>
+            </nav>
+
+            <!-- Project info -->
+            <address class="footer-meta">
+                <h3 class="footer-meta__heading">Project Info</h3>
+                <ul class="footer-meta__list" role="list">
+                    <li>
+                        <span class="meta-label">Group:</span>
+                        <span class="meta-value" id="groupName">Cloud Lab Group</span>
+                    </li>
+                    <li>
+                        <span class="meta-label">Course:</span>
+                        <span class="meta-value" id="courseTitle">Introduction To Cloud Computing</span>
+                    </li>
+                    <li>
+                        <span class="meta-label">Academic Year:</span>
+                        <span class="meta-value" id="academicYear">2025 / 2026</span>
+                    </li>
+                </ul>
+            </address>
+        </div>
+
+        <!-- Bottom bar -->
+        <div class="footer-bottom">
+            <div class="container">
+                <p class="footer-bottom__text">
+                    &copy; <span id="currentYear"></span> Campus Events &amp; Navigation System.
+                    Built for educational purposes.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Include the global app.js (for nav toggle, current year, etc.) -->
+    <script src="js/app.js"></script>
+</body>
+</html>
 
