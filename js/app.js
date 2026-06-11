@@ -118,7 +118,7 @@ $$("[id='currentYear']").forEach(el => {
       time: "3:00 PM",
       location: "University Sports Complex",
       description: "Cheer on your faculty team in the annual inter-faculty football tournament. All students welcome.",
-      image: "images/football.jpg"
+      image: "images/Football.jpg"
     },
     {
       id: "e004",
@@ -128,7 +128,7 @@ $$("[id='currentYear']").forEach(el => {
       time: "9:00 AM",
       location: "Block C, C1A",
       description: "A hands-on full-day workshop covering HTML, CSS, JavaScript, and deployment with GitHub Pages.",
-      image: "images/3.png"
+      image: "images/3.PNG"
     },
     {
       id: "e005",
