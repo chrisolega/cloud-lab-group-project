@@ -108,7 +108,7 @@ $$("[id='currentYear']").forEach(el => {
       time: "7:00 PM",
       location: "Car Pack, Main Campus",
       description: "Celebrate the end of semester with music, food, and networking with fellow students.",
-      image: "image/2.jpg"
+      image: "images/2.jpg"
     },
     {
       id: "e003",
@@ -118,7 +118,7 @@ $$("[id='currentYear']").forEach(el => {
       time: "3:00 PM",
       location: "University Sports Complex",
       description: "Cheer on your faculty team in the annual inter-faculty football tournament. All students welcome.",
-      image: "image/football.jpg"
+      image: "images/football.jpg"
     },
     {
       id: "e004",
@@ -128,7 +128,7 @@ $$("[id='currentYear']").forEach(el => {
       time: "9:00 AM",
       location: "Block C, C1A",
       description: "A hands-on full-day workshop covering HTML, CSS, JavaScript, and deployment with GitHub Pages.",
-      image: "image/3.png"
+      image: "images/3.png"
     },
     {
       id: "e005",
@@ -138,7 +138,7 @@ $$("[id='currentYear']").forEach(el => {
       time: "11:00 AM",
       location: "Florence Onny Auditorium, G Block",
       description: "Learn best practices for academic research, citation, and data analysis from leading faculty.",
-      image: "image/4.jpg"
+      image: "images/4.jpg"
     },
     {
       id: "e006",
@@ -148,7 +148,7 @@ $$("[id='currentYear']").forEach(el => {
       time: "2:00 PM",
       location: "Main Library, Adminitration Block",
       description: "Students gets to test thier Writing and Literacy Skills.",
-      image: "image/5.jpg"
+      image: "images/5.jpg"
     }
   ];
 
