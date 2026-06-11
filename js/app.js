@@ -98,7 +98,7 @@ $$("[id='currentYear']").forEach(el => {
       time: "10:00 AM",
       location: "Eva Vonn, Administration Block",
       description: "An introductory seminar covering the fundamentals of AI, machine learning, and their real-world applications.",
-      image: "image/1.jpg"
+      image: "images/1.jpg"
     },
     {
       id: "e002",
