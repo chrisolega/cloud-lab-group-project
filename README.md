@@ -1,80 +1,86 @@
-# Campus Events and Navigation System
+# Campus Navigator
 
-A static GitHub Pages website that allows students, staff, and visitors to
-discover and explore campus events.
+A cloud-based web app (CSBC 252 capstone) that helps new students find buildings and events on their campus. Built with plain PHP, HTML, CSS and MySQL. Designed to deploy on AWS Free Tier: EC2 (Apache + PHP), RDS (MySQL) and S3 (uploaded images).
 
----
+## Default accounts
 
-## 📋 Project Info
+| Role | Login | Password |
+|---|---|---|
+| Admin | admin | admin123 |
+| Manager (every school) | gctu_manager, ug_manager, knust_manager, umat_manager, atu_manager, ktu_manager | manager123 |
+| Student (GCTU sample) | index number 2425402594 | none needed |
 
-| Field         | Details                              |
-|---------------|--------------------------------------|
-| Group         | Cloud Lab Group                      |
-| Course        | Cloud Computing & Web Technologies   |
-| Academic Year | 2025 / 2026                          |
-| Platform      | GitHub Pages (Static)                |
-| Tech Stack    | HTML5 · CSS3 · Vanilla JavaScript    |
+Change these passwords after first login (admins can edit managers from the admin panel).
 
----
-
-## 📁 Project Structure
+## Folder structure
 
 ```
-cloud-lab-group-project/
-│
-├── index.html          # Home page — event listing & search
-├── about.html          # About page — Detailed information about the system
-├── contact.html        # Contact page — contact form
-├──  team.html          #Team page - Details about the Team
-|
-├── images              # Files containing the images of the event's venues 
-│
-├── css/
-│   └── style.css       # All styles for the site
-│
-├── js/
-│   └── app.js         # All JavaScript (event fetching, search, filters)
-│
-└── README.md          # Project documentation (this file)
+campus-navigator/
+  index.php            landing page with the 6 school cards
+  css/style.css        all styling
+  config/config.php    ALL secrets and settings (DB + S3) - excluded from Git
+  includes/db.php      PDO database connection + session start
+  includes/auth.php    role checks (student / manager / admin)
+  includes/upload.php  the ONE upload function (S3 or local, switched in config)
+  includes/header.php  shared navigation
+  includes/footer.php  shared footer
+  student/             student login, events page, logout
+  manager/             manager login (school first), events CRUD, students CSV/manual, logout
+  admin/               admin login, dashboard totals, managers/students/events CRUD
+  uploads/             local image storage (development mode only)
+  database.sql         full schema + sample data
 ```
 
----
+## Run locally on XAMPP
 
-## 🚀 Getting Started
+1. Copy the `campus-navigator` folder into `C:\xampp\htdocs\`.
+2. Start Apache and MySQL in the XAMPP control panel.
+3. Open phpMyAdmin (http://localhost/phpmyadmin), go to Import, and import `database.sql`.
+4. Open `config/config.php` and confirm:
+   - DB_HOST = localhost, DB_USER = root, DB_PASS = '' (XAMPP defaults)
+   - UPLOAD_MODE = 'local'
+5. Visit http://localhost/campus-navigator/
 
-### View Locally
+## Deploying to AWS (EC2 + RDS + S3)
 
-No build tools or server required. Simply open `index.html` in a browser,
-or use the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
-VS Code extension for hot-reload during development.
+Only two things change in code: `config/config.php` values and `UPLOAD_MODE`.
 
-> **Note:** Fetching `events.json` via `fetch()` requires a local server
-> (Live Server or similar) due to browser CORS restrictions on `file://` URLs.
+### 1. IAM (least privilege)
+- Create an IAM role for EC2 with ONLY `AmazonS3FullAccess` scoped to your bucket (or a custom policy allowing s3:PutObject/GetObject on that bucket).
+- Attach the role to the EC2 instance. Because a role is attached, the AWS SDK picks up credentials automatically - no keys in code.
 
-### Deploy to GitHub Pages
+### 2. RDS (MySQL)
+- Create a MySQL RDS instance (db.t3.micro, Free Tier), no public access.
+- Set its security group to allow port 3306 ONLY from the EC2 security group.
+- Connect from EC2 (`mysql -h your-rds-endpoint -u admin -p`) and run `database.sql`.
 
-1. Push the repository to GitHub.
-2. Go to **Settings → Pages**.
-3. Set **Source** to the `main` branch, root `/` directory.
-4. GitHub will publish the site at [](https://chrisolega.github.io/cloud-lab-group-project/).
+### 3. S3
+- Create a bucket, enable public read for the `events/` prefix (or use a bucket policy allowing GetObject on `events/*`).
+- Put the bucket name and region in `config/config.php`.
 
----
----
+### 4. EC2
+- Launch Amazon Linux 2023 or Ubuntu (t2.micro/t3.micro, Free Tier).
+- Security group: allow inbound 80, 443 and 22 (22 from your IP only).
+- Install Apache, PHP, and the MySQL PHP extension, then upload the project to `/var/www/html/`.
+- Install the AWS SDK for PHP in the project root: `composer require aws/aws-sdk-php` (creates the `vendor/` folder used by `includes/upload.php`).
 
-## 👥 Team Members
+### 5. Switch the config
+In `config/config.php` set:
+- DB_HOST = your RDS endpoint, DB_USER / DB_PASS = your RDS credentials
+- UPLOAD_MODE = 's3'
+- S3_BUCKET and S3_REGION to your bucket
 
-<!-- TODO: Fill in team member names and roles -->
+Uploaded images now go straight to S3 and are never written to EC2 local storage.
 
-| Name                                     | Role / Responsibility                                                                                                                                  |
-|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Christabel Addomaa Danso(2425402244)     | Group Leader & Frontend Developer (team.html) / Led the group, developed the Team page, coordinated tasks, and enforced timelines.                     |
-| Christian Gift Kwesi Tetteh(2425402198)  | GitHub Manager & Frontend Developer (index.html) / Created and managed the GitHub repo, set up GitHub Pages, developed homepage layout and navigation. |
-| Yvette Ayitey(2425403936)                |Frontend Developer (contact.html)/ Designed the Contact page with communication details and a contact form.                                             |
-| Daniel Edem Edzeani(2425402513)          | CSS, JavaScript & JSON Developer/ Styled the site with CSS, added interactivity with JavaScript, managed JSON data, improved UX and consistency.       |
-| Julius Mortey(2425402382)                | Frontend Developer (about.html) / Developed the About page, ensured readability, structure, and design consistency.                                    |
+### 6. CloudWatch
+- EC2 basic metrics (CPU, network) appear in CloudWatch automatically; create an alarm on CPUUtilization > 80% for the deployment proof screenshots.
 
----
+### Bonus: Application Load Balancer
+- Create a second EC2 instance from an AMI of the first, put both in a target group, and create an ALB forwarding port 80 to the target group. Point users at the ALB DNS name.
 
-## 📄 License
-
-This project is submitted as coursework for academic assessment purposes.
+## Security notes (matches course requirements)
+- Every query uses PDO prepared statements (no SQL injection).
+- Manager and admin passwords hashed with password_hash().
+- PHP sessions with separate role checks - students cannot open manager pages, managers cannot open admin pages.
+- All secrets live in config/config.php, which is in .gitignore and blocked from the web by config/.htaccess.
+- Image uploads validated by type and size in ONE function (includes/upload.php).
