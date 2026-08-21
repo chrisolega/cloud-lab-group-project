@@ -6,91 +6,219 @@ need_manager();
 
 $base = '../';
 $title = 'Manage Students';
-$sid = $_SESSION['manager_school'];
+$sid = intval($_SESSION['manager_school']);
 
 $msg = '';
 $bad = '';
 
 /*
 |--------------------------------------------------------------------------
-| CSRF Protection
+| CSRF PROTECTION
 |--------------------------------------------------------------------------
 */
+
 if (empty($_SESSION['students_csrf'])) {
     $_SESSION['students_csrf'] = bin2hex(random_bytes(32));
 }
 
 $csrf = $_SESSION['students_csrf'];
 
-/*
-|--------------------------------------------------------------------------
-| Helper: Validate CSRF
-|--------------------------------------------------------------------------
-*/
-function valid_csrf($token) {
+function valid_csrf($token)
+{
     return isset($_SESSION['students_csrf']) &&
            hash_equals($_SESSION['students_csrf'], $token);
 }
 
+
 /*
 |--------------------------------------------------------------------------
-| Helper: Clean Index Number
+| CLEAN INDEX NUMBER
 |--------------------------------------------------------------------------
 */
-function clean_index($index) {
+
+function clean_index($index)
+{
     $index = trim($index);
     $index = preg_replace('/\s+/', '', $index);
+
     return $index;
 }
 
+
 /*
 |--------------------------------------------------------------------------
-| Handle POST Requests
+| VALIDATE INDEX NUMBER
 |--------------------------------------------------------------------------
 */
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if (!isset($_POST['csrf_token']) || !valid_csrf($_POST['csrf_token'])) {
-        $bad = 'Security verification failed. Please try again.';
+function valid_index($index)
+{
+    return preg_match(
+        '/^[A-Za-z0-9\/_-]+$/',
+        $index
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADD STUDENT HELPER
+|--------------------------------------------------------------------------
+*/
+
+function add_student($db, $index, $sid)
+{
+    $index = clean_index($index);
+
+    if ($index === '') {
+        return 'invalid';
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | CSV Upload
-    |--------------------------------------------------------------------------
-    */
-    elseif (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === 0) {
+    if (!valid_index($index)) {
+        return 'invalid';
+    }
 
-        $added = 0;
-        $duplicates = 0;
-        $invalid = 0;
+    $check = $db->prepare(
+        'SELECT id
+         FROM students
+         WHERE index_number = ?
+         AND school_id = ?
+         LIMIT 1'
+    );
 
-        $fileName = $_FILES['csv_file']['name'];
-        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    $check->execute(array(
+        $index,
+        $sid
+    ));
 
-        if ($extension !== 'csv') {
-            $bad = 'Please upload a valid CSV file.';
-        } else {
+    if ($check->fetch()) {
+        return 'duplicate';
+    }
 
-            $fh = fopen($_FILES['csv_file']['tmp_name'], 'r');
+    $insert = $db->prepare(
+        'INSERT INTO students
+        (index_number, school_id)
+        VALUES (?, ?)'
+    );
 
-            if ($fh === false) {
-                $bad = 'Unable to open the CSV file.';
+    $insert->execute(array(
+        $index,
+        $sid
+    ));
+
+    if ($insert->rowCount() > 0) {
+        return 'added';
+    }
+
+    return 'invalid';
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| HANDLE POST
+|--------------------------------------------------------------------------
+*/
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $token = isset($_POST['csrf_token'])
+        ? $_POST['csrf_token']
+        : '';
+
+    if (!valid_csrf($token)) {
+
+        $bad =
+            'Security verification failed. Please refresh the page and try again.';
+
+    } else {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CSV UPLOAD
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            isset($_FILES['csv_file']) &&
+            $_FILES['csv_file']['error'] !== UPLOAD_ERR_NO_FILE
+        ) {
+
+            $added = 0;
+            $duplicates = 0;
+            $invalid = 0;
+
+            $file = $_FILES['csv_file'];
+
+            $extension = strtolower(
+                pathinfo(
+                    $file['name'],
+                    PATHINFO_EXTENSION
+                )
+            );
+
+
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+
+                $bad = 'There was a problem uploading the CSV file.';
+
+            } elseif ($extension !== 'csv') {
+
+                $bad = 'Please upload a CSV file only.';
+
+            } elseif ($file['size'] > 5 * 1024 * 1024) {
+
+                $bad =
+                    'The CSV file is too large. Maximum size is 5MB.';
+
             } else {
 
-                while (($row = fgetcsv($fh)) !== false) {
+                $fh = fopen(
+                    $file['tmp_name'],
+                    'r'
+                );
 
-                    foreach ($row as $cell) {
 
-                        $index = clean_index($cell);
+                if ($fh === false) {
+
+                    $bad =
+                        'Unable to read the CSV file.';
+
+                } else {
+
+                    /*
+                    | Read CSV line by line.
+                    */
+
+                    while (($row = fgetcsv($fh)) !== false) {
+
+                        if (!isset($row[0])) {
+                            continue;
+                        }
+
+                        $index = clean_index($row[0]);
 
                         if ($index === '') {
                             continue;
                         }
 
+
                         /*
-                        | Skip common CSV headers
+                        | Remove UTF-8 BOM.
                         */
+
+                        $index = preg_replace(
+                            '/^\xEF\xBB\xBF/',
+                            '',
+                            $index
+                        );
+
+
+                        /*
+                        | Skip common headers.
+                        */
+
                         $lower = strtolower($index);
 
                         if (
@@ -102,279 +230,341 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             continue;
                         }
 
-                        /*
-                        | Basic validation
-                        | Allows letters, numbers, hyphens and slashes.
-                        */
-                        if (!preg_match('/^[A-Za-z0-9\/_-]+$/', $index)) {
-                            $invalid++;
-                            continue;
-                        }
 
-                        $q = $db->prepare(
-                            'SELECT id FROM students
-                             WHERE index_number = ? AND school_id = ?
-                             LIMIT 1'
+                        $result = add_student(
+                            $db,
+                            $index,
+                            $sid
                         );
 
-                        $q->execute(array($index, $sid));
 
-                        if ($q->fetch()) {
-                            $duplicates++;
-                            continue;
-                        }
+                        if ($result === 'added') {
 
-                        $insert = $db->prepare(
-                            'INSERT INTO students (index_number, school_id)
-                             VALUES (?, ?)'
-                        );
-
-                        $insert->execute(array($index, $sid));
-
-                        if ($insert->rowCount() > 0) {
                             $added++;
+
+                        } elseif ($result === 'duplicate') {
+
+                            $duplicates++;
+
+                        } else {
+
+                            $invalid++;
                         }
                     }
-                }
 
-                fclose($fh);
+                    fclose($fh);
 
-                $msg = $added . ' index number(s) added from the CSV file.';
 
-                if ($duplicates > 0) {
-                    $msg .= ' ' . $duplicates . ' duplicate(s) skipped.';
-                }
+                    $msg =
+                        $added .
+                        ' student(s) added from the CSV file.';
 
-                if ($invalid > 0) {
-                    $msg .= ' ' . $invalid . ' invalid entrie(s) skipped.';
+
+                    if ($duplicates > 0) {
+
+                        $msg .=
+                            ' ' .
+                            $duplicates .
+                            ' duplicate(s) skipped.';
+                    }
+
+
+                    if ($invalid > 0) {
+
+                        $msg .=
+                            ' ' .
+                            $invalid .
+                            ' invalid entrie(s) skipped.';
+                    }
                 }
             }
         }
-    }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Manual List
-    |--------------------------------------------------------------------------
-    */
-    elseif (isset($_POST['manual_list'])) {
 
-        $added = 0;
-        $duplicates = 0;
-        $invalid = 0;
+        /*
+        |--------------------------------------------------------------------------
+        | MANUAL LIST
+        |--------------------------------------------------------------------------
+        */
 
-        $list = preg_split(
-            '/[\s,;]+/',
-            $_POST['manual_list']
-        );
+        elseif (isset($_POST['manual_list'])) {
 
-        foreach ($list as $index) {
+            $added = 0;
+            $duplicates = 0;
+            $invalid = 0;
 
-            $index = clean_index($index);
+            $manual = isset($_POST['manual_list'])
+                ? $_POST['manual_list']
+                : '';
 
-            if ($index === '') {
-                continue;
-            }
 
-            if (!preg_match('/^[A-Za-z0-9\/_-]+$/', $index)) {
-                $invalid++;
-                continue;
-            }
-
-            $q = $db->prepare(
-                'SELECT id FROM students
-                 WHERE index_number = ? AND school_id = ?
-                 LIMIT 1'
+            $list = preg_split(
+                '/[\s,;]+/',
+                $manual
             );
 
-            $q->execute(array($index, $sid));
 
-            if ($q->fetch()) {
-                $duplicates++;
-                continue;
+            foreach ($list as $index) {
+
+                $result = add_student(
+                    $db,
+                    $index,
+                    $sid
+                );
+
+
+                if ($result === 'added') {
+
+                    $added++;
+
+                } elseif ($result === 'duplicate') {
+
+                    $duplicates++;
+
+                } elseif ($result === 'invalid') {
+
+                    $invalid++;
+                }
             }
 
-            $insert = $db->prepare(
-                'INSERT INTO students (index_number, school_id)
-                 VALUES (?, ?)'
-            );
 
-            $insert->execute(array($index, $sid));
+            $msg =
+                $added .
+                ' student(s) added successfully.';
 
-            if ($insert->rowCount() > 0) {
-                $added++;
+
+            if ($duplicates > 0) {
+
+                $msg .=
+                    ' ' .
+                    $duplicates .
+                    ' duplicate(s) skipped.';
+            }
+
+
+            if ($invalid > 0) {
+
+                $msg .=
+                    ' ' .
+                    $invalid .
+                    ' invalid entrie(s) skipped.';
             }
         }
 
-        $msg = $added . ' index number(s) added.';
 
-        if ($duplicates > 0) {
-            $msg .= ' ' . $duplicates . ' duplicate(s) skipped.';
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | EDIT STUDENT
+        |--------------------------------------------------------------------------
+        */
 
-        if ($invalid > 0) {
-            $msg .= ' ' . $invalid . ' invalid entrie(s) skipped.';
-        }
-    }
+        elseif (isset($_POST['edit_id'])) {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Edit Student
-    |--------------------------------------------------------------------------
-    */
-    elseif (isset($_POST['edit_id'])) {
-
-        $editId = intval($_POST['edit_id']);
-        $newIndex = clean_index($_POST['new_index']);
-
-        if ($newIndex === '') {
-
-            $bad = 'Index number cannot be empty.';
-
-        } elseif (!preg_match('/^[A-Za-z0-9\/_-]+$/', $newIndex)) {
-
-            $bad = 'The index number contains invalid characters.';
-
-        } else {
-
-            /*
-            | Check if another student already has this index number.
-            */
-            $check = $db->prepare(
-                'SELECT id FROM students
-                 WHERE index_number = ?
-                 AND school_id = ?
-                 AND id != ?
-                 LIMIT 1'
+            $editId = intval(
+                $_POST['edit_id']
             );
 
-            $check->execute(array(
-                $newIndex,
-                $sid,
-                $editId
-            ));
+            $newIndex = clean_index(
+                isset($_POST['new_index'])
+                    ? $_POST['new_index']
+                    : ''
+            );
 
-            if ($check->fetch()) {
 
-                $bad = 'That index number already exists.';
+            if ($newIndex === '') {
+
+                $bad =
+                    'Index number cannot be empty.';
+
+            } elseif (!valid_index($newIndex)) {
+
+                $bad =
+                    'The index number contains invalid characters.';
 
             } else {
 
-                $q = $db->prepare(
-                    'UPDATE students
-                     SET index_number = ?
-                     WHERE id = ?
-                     AND school_id = ?'
+                /*
+                | Check duplicate.
+                */
+
+                $check = $db->prepare(
+                    'SELECT id
+                     FROM students
+                     WHERE index_number = ?
+                     AND school_id = ?
+                     AND id != ?
+                     LIMIT 1'
                 );
 
-                $q->execute(array(
+                $check->execute(array(
                     $newIndex,
-                    $editId,
-                    $sid
+                    $sid,
+                    $editId
                 ));
 
-                $msg = 'Index number updated successfully.';
+
+                if ($check->fetch()) {
+
+                    $bad =
+                        'That index number already exists.';
+
+                } else {
+
+                    $update = $db->prepare(
+                        'UPDATE students
+                         SET index_number = ?
+                         WHERE id = ?
+                         AND school_id = ?'
+                    );
+
+                    $update->execute(array(
+                        $newIndex,
+                        $editId,
+                        $sid
+                    ));
+
+
+                    if ($update->rowCount() > 0) {
+
+                        $msg =
+                            'Index number updated successfully.';
+
+                    } else {
+
+                        $msg =
+                            'No changes were made.';
+                    }
+                }
             }
         }
-    }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Bulk Delete
-    |--------------------------------------------------------------------------
-    */
-    elseif (isset($_POST['bulk_delete'])) {
 
-        if (
-            !isset($_POST['student_ids']) ||
-            !is_array($_POST['student_ids']) ||
-            count($_POST['student_ids']) === 0
-        ) {
+        /*
+        |--------------------------------------------------------------------------
+        | BULK DELETE
+        |--------------------------------------------------------------------------
+        */
 
-            $bad = 'Please select at least one student.';
+        elseif (isset($_POST['bulk_delete'])) {
 
-        } else {
+            $studentIds =
+                isset($_POST['student_ids']) &&
+                is_array($_POST['student_ids'])
+                    ? $_POST['student_ids']
+                    : array();
+
 
             $ids = array();
 
-            foreach ($_POST['student_ids'] as $id) {
-                $id = intval($id);
 
-                if ($id > 0) {
-                    $ids[] = $id;
+            foreach ($studentIds as $studentId) {
+
+                $studentId = intval($studentId);
+
+                if ($studentId > 0) {
+                    $ids[] = $studentId;
                 }
             }
 
-            if (count($ids) > 0) {
+
+            $ids = array_unique($ids);
+
+
+            if (count($ids) === 0) {
+
+                $bad =
+                    'Please select at least one student.';
+
+            } else {
 
                 $placeholders = implode(
                     ',',
-                    array_fill(0, count($ids), '?')
+                    array_fill(
+                        0,
+                        count($ids),
+                        '?'
+                    )
                 );
+
 
                 $params = array_merge(
                     $ids,
                     array($sid)
                 );
 
-                $q = $db->prepare(
+
+                $delete = $db->prepare(
                     "DELETE FROM students
                      WHERE id IN ($placeholders)
                      AND school_id = ?"
                 );
 
-                $q->execute($params);
 
-                $msg = $q->rowCount() .
-                       ' student(s) removed successfully.';
+                $delete->execute($params);
+
+
+                $msg =
+                    $delete->rowCount() .
+                    ' student(s) removed successfully.';
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | INDIVIDUAL DELETE
+        |--------------------------------------------------------------------------
+        */
+
+        elseif (isset($_POST['delete_id'])) {
+
+            $deleteId = intval(
+                $_POST['delete_id']
+            );
+
+
+            if ($deleteId <= 0) {
+
+                $bad =
+                    'Invalid student selected.';
+
+            } else {
+
+                $delete = $db->prepare(
+                    'DELETE FROM students
+                     WHERE id = ?
+                     AND school_id = ?'
+                );
+
+
+                $delete->execute(array(
+                    $deleteId,
+                    $sid
+                ));
+
+
+                if ($delete->rowCount() > 0) {
+
+                    $msg =
+                        'Student removed successfully.';
+
+                } else {
+
+                    $bad =
+                        'Student could not be found.';
+                }
             }
         }
     }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Individual Delete
-|--------------------------------------------------------------------------
-|
-| Deletion is now POST-based instead of GET-based.
-|
-*/
-if (
-    $_SERVER['REQUEST_METHOD'] === 'POST' &&
-    isset($_POST['delete_id']) &&
-    isset($_POST['csrf_token']) &&
-    valid_csrf($_POST['csrf_token'])
-) {
-
-    $deleteId = intval($_POST['delete_id']);
-
-    if ($deleteId > 0) {
-
-        $q = $db->prepare(
-            'DELETE FROM students
-             WHERE id = ?
-             AND school_id = ?'
-        );
-
-        $q->execute(array(
-            $deleteId,
-            $sid
-        ));
-
-        if ($q->rowCount() > 0) {
-            $msg = 'Index number removed successfully.';
-        } else {
-            $bad = 'Student could not be found.';
-        }
-    }
-}
 
 /*
 |--------------------------------------------------------------------------
-| Export CSV
+| EXPORT CSV
 |--------------------------------------------------------------------------
 */
+
 if (
     isset($_GET['export']) &&
     $_GET['export'] === 'csv'
@@ -389,43 +579,120 @@ if (
 
     $q->execute(array($sid));
 
-    $filename = 'students_' . date('Y-m-d_H-i-s') . '.csv';
 
-    header('Content-Type: text/csv; charset=utf-8');
+    $filename =
+        'students_' .
+        date('Y-m-d_H-i-s') .
+        '.csv';
+
+
+    header(
+        'Content-Type: text/csv; charset=utf-8'
+    );
+
     header(
         'Content-Disposition: attachment; filename="' .
         $filename .
         '"'
     );
 
-    $output = fopen('php://output', 'w');
 
-    fputcsv($output, array('index_number'));
+    $output = fopen(
+        'php://output',
+        'w'
+    );
 
-    while ($row = $q->fetch(PDO::FETCH_ASSOC)) {
-        fputcsv($output, array($row['index_number']));
+
+    fputcsv(
+        $output,
+        array('index_number')
+    );
+
+
+    while (
+        $row = $q->fetch(
+            PDO::FETCH_ASSOC
+        )
+    ) {
+
+        fputcsv(
+            $output,
+            array($row['index_number'])
+        );
     }
 
+
     fclose($output);
+
     exit;
 }
 
+
 /*
 |--------------------------------------------------------------------------
-| Search
+| DOWNLOAD CSV TEMPLATE
 |--------------------------------------------------------------------------
 */
-$search = '';
 
-if (isset($_GET['search'])) {
-    $search = trim($_GET['search']);
+if (
+    isset($_GET['template']) &&
+    $_GET['template'] === 'csv'
+) {
+
+    header(
+        'Content-Type: text/csv; charset=utf-8'
+    );
+
+    header(
+        'Content-Disposition: attachment; filename="student_template.csv"'
+    );
+
+
+    $output = fopen(
+        'php://output',
+        'w'
+    );
+
+
+    fputcsv(
+        $output,
+        array('index_number')
+    );
+
+    fputcsv(
+        $output,
+        array('10234567')
+    );
+
+    fputcsv(
+        $output,
+        array('10234568')
+    );
+
+
+    fclose($output);
+
+    exit;
 }
 
+
 /*
 |--------------------------------------------------------------------------
-| Pagination
+| SEARCH
 |--------------------------------------------------------------------------
 */
+
+$search = isset($_GET['search'])
+    ? trim($_GET['search'])
+    : '';
+
+
+/*
+|--------------------------------------------------------------------------
+| PAGINATION
+|--------------------------------------------------------------------------
+*/
+
 $perPage = 20;
 
 $page = isset($_GET['page'])
@@ -436,11 +703,13 @@ if ($page < 1) {
     $page = 1;
 }
 
+
 /*
 |--------------------------------------------------------------------------
-| Count Students
+| COUNT
 |--------------------------------------------------------------------------
 */
+
 if ($search !== '') {
 
     $countQ = $db->prepare(
@@ -463,27 +732,41 @@ if ($search !== '') {
          WHERE school_id = ?'
     );
 
-    $countQ->execute(array($sid));
+    $countQ->execute(
+        array($sid)
+    );
 }
 
-$totalStudents = intval($countQ->fetchColumn());
+
+$totalStudents = intval(
+    $countQ->fetchColumn()
+);
+
 
 $totalPages = max(
     1,
-    ceil($totalStudents / $perPage)
+    ceil(
+        $totalStudents / $perPage
+    )
 );
+
 
 if ($page > $totalPages) {
     $page = $totalPages;
 }
 
-$offset = ($page - 1) * $perPage;
+
+$offset =
+    ($page - 1) *
+    $perPage;
+
 
 /*
 |--------------------------------------------------------------------------
-| Get Students
+| GET STUDENTS
 |--------------------------------------------------------------------------
 */
+
 if ($search !== '') {
 
     $q = $db->prepare(
@@ -495,20 +778,25 @@ if ($search !== '') {
          LIMIT ? OFFSET ?'
     );
 
-    /*
-    | LIMIT/OFFSET need integers.
-    */
-    $q->bindValue(1, $sid);
+
+    $q->bindValue(
+        1,
+        $sid,
+        PDO::PARAM_INT
+    );
+
     $q->bindValue(
         2,
         '%' . $search . '%',
         PDO::PARAM_STR
     );
+
     $q->bindValue(
         3,
         $perPage,
         PDO::PARAM_INT
     );
+
     $q->bindValue(
         4,
         $offset,
@@ -527,9 +815,11 @@ if ($search !== '') {
          LIMIT ? OFFSET ?'
     );
 
+
     $q->bindValue(
         1,
-        $sid
+        $sid,
+        PDO::PARAM_INT
     );
 
     $q->bindValue(
@@ -547,78 +837,324 @@ if ($search !== '') {
     $q->execute();
 }
 
-$students = $q->fetchAll(PDO::FETCH_ASSOC);
+
+$students = $q->fetchAll(
+    PDO::FETCH_ASSOC
+);
+
 
 /*
 |--------------------------------------------------------------------------
-| Statistics
+| EDIT STUDENT
 |--------------------------------------------------------------------------
 */
-$statsQ = $db->prepare(
-    'SELECT COUNT(*)
-     FROM students
-     WHERE school_id = ?'
-);
 
-$statsQ->execute(array($sid));
-
-$allStudents = intval($statsQ->fetchColumn());
-
-$showingFrom = $totalStudents > 0
-    ? $offset + 1
-    : 0;
-
-$showingTo = min(
-    $offset + $perPage,
-    $totalStudents
-);
-
-/*
-|--------------------------------------------------------------------------
-| Edit Student
-|--------------------------------------------------------------------------
-*/
 $edit = null;
 
 if (isset($_GET['edit'])) {
 
-    $editId = intval($_GET['edit']);
+    $editId = intval(
+        $_GET['edit']
+    );
 
-    $q = $db->prepare(
+
+    $editQ = $db->prepare(
         'SELECT *
          FROM students
          WHERE id = ?
          AND school_id = ?'
     );
 
-    $q->execute(array(
+
+    $editQ->execute(array(
         $editId,
         $sid
     ));
 
-    $edit = $q->fetch(PDO::FETCH_ASSOC);
+
+    $edit =
+        $editQ->fetch(
+            PDO::FETCH_ASSOC
+        );
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| STATISTICS
+|--------------------------------------------------------------------------
+*/
+
+$showingFrom =
+    $totalStudents > 0
+        ? $offset + 1
+        : 0;
+
+
+$showingTo =
+    min(
+        $offset + $perPage,
+        $totalStudents
+    );
+
 
 include '../includes/header.php';
 ?>
 
-<h1>Student Index Numbers</h1>
+
+<style>
+
+/* =========================================================
+   STUDENT MANAGEMENT
+========================================================= */
+
+.student-stats {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 18px;
+
+    margin: 25px 0;
+}
+
+
+.student-stat {
+
+    background: #fff;
+
+    padding: 22px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 4px 15px rgba(0,0,0,.08);
+
+    border-left:
+        5px solid #d4af37;
+}
+
+
+.student-stat h3 {
+
+    margin: 0 0 8px;
+
+    font-size: 14px;
+
+    color: #777;
+}
+
+
+.student-stat-number {
+
+    font-size: 30px;
+
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.student-toolbar {
+
+    display: flex;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    align-items: center;
+}
+
+
+.student-toolbar input {
+
+    flex: 1;
+
+    min-width: 220px;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.student-table-wrapper {
+
+    overflow-x: auto;
+}
+
+
+.student-table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    margin-top: 15px;
+}
+
+
+.student-table th,
+.student-table td {
+
+    padding: 13px;
+
+    border-bottom:
+        1px solid #eee;
+
+    text-align: left;
+}
+
+
+.student-table th {
+
+    background: #f7f7f7;
+
+    font-weight: bold;
+}
+
+
+.student-table tr:hover {
+
+    background: #fafafa;
+}
+
+
+.student-actions {
+
+    display: flex;
+
+    gap: 7px;
+
+    flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.student-pagination {
+
+    display: flex;
+
+    gap: 7px;
+
+    flex-wrap: wrap;
+
+    align-items: center;
+
+    margin-top: 25px;
+}
+
+
+.student-pagination a,
+.student-pagination span {
+
+    padding: 8px 12px;
+
+    border-radius: 7px;
+
+    text-decoration: none;
+}
+
+
+.student-pagination a {
+
+    background: #eee;
+
+    color: #222;
+}
+
+
+.student-pagination .current {
+
+    background: #d4af37;
+
+    color: #fff;
+
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   HELP TEXT
+========================================================= */
+
+.help-text {
+
+    font-size: 13px;
+
+    color: #777;
+
+    margin-top: 5px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .student-stats {
+
+        grid-template-columns: 1fr;
+    }
+
+    .student-toolbar {
+
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+    .student-toolbar input {
+
+        width: 100%;
+    }
+
+}
+
+</style>
+
+
+<h1>Manage Students</h1>
 
 <p class="lead">
-    Students on this list can sign in to your school with their
-    index number alone.
+    Add, edit, search, export and manage student index numbers
+    for your school.
 </p>
 
-<?php if ($msg) { ?>
+
+<?php if ($msg !== '') { ?>
+
     <div class="msg ok">
-        <?php echo htmlspecialchars($msg); ?>
+
+        <?php
+        echo htmlspecialchars($msg);
+        ?>
+
     </div>
+
 <?php } ?>
 
-<?php if ($bad) { ?>
+
+<?php if ($bad !== '') { ?>
+
     <div class="msg bad">
-        <?php echo htmlspecialchars($bad); ?>
+
+        <?php
+        echo htmlspecialchars($bad);
+        ?>
+
     </div>
+
 <?php } ?>
 
 
@@ -626,43 +1162,97 @@ include '../includes/header.php';
      STATISTICS
 ========================================================= -->
 
-<div class="card">
+<div class="student-stats">
 
-    <h2>Student Overview</h2>
+    <div class="student-stat">
 
-    <p>
-        <strong>Total registered students:</strong>
-        <?php echo number_format($allStudents); ?>
-    </p>
+        <h3>
+            Total Students
+        </h3>
 
-    <p>
-        <strong>Students currently shown:</strong>
-        <?php echo number_format($totalStudents); ?>
-    </p>
+        <div class="student-stat-number">
+
+            <?php
+            echo number_format(
+                $totalStudents
+            );
+            ?>
+
+        </div>
+
+    </div>
+
+
+    <div class="student-stat">
+
+        <h3>
+            Current Page
+        </h3>
+
+        <div class="student-stat-number">
+
+            <?php
+            echo $page;
+            ?>
+
+        </div>
+
+    </div>
+
+
+    <div class="student-stat">
+
+        <h3>
+            Students Per Page
+        </h3>
+
+        <div class="student-stat-number">
+
+            <?php
+            echo $perPage;
+            ?>
+
+        </div>
+
+    </div>
 
 </div>
 
 
 <!-- =========================================================
-     SEARCH + EXPORT
+     SEARCH
 ========================================================= -->
 
 <div class="card">
 
-    <h2>Search Students</h2>
+    <h2>
+        Search Students
+    </h2>
 
-    <form method="get">
+    <form
+        method="get"
+        class="student-toolbar"
+    >
 
         <input
             type="text"
             name="search"
+            value="<?php
+                echo htmlspecialchars(
+                    $search
+                );
+            ?>"
             placeholder="Search by index number..."
-            value="<?php echo htmlspecialchars($search); ?>"
         >
 
-        <button type="submit" class="btn">
+
+        <button
+            type="submit"
+            class="btn"
+        >
             Search
         </button>
+
 
         <?php if ($search !== '') { ?>
 
@@ -670,10 +1260,11 @@ include '../includes/header.php';
                 href="students.php"
                 class="btn gold"
             >
-                Clear Search
+                Clear
             </a>
 
         <?php } ?>
+
 
         <a
             href="students.php?export=csv"
@@ -688,17 +1279,20 @@ include '../includes/header.php';
 
 
 <!-- =========================================================
-     CSV UPLOAD
+     CSV IMPORT
 ========================================================= -->
 
 <div class="card">
 
-    <h2>Upload a CSV File</h2>
+    <h2>
+        Import Students
+    </h2>
 
     <p class="lead">
         Upload a CSV file containing student index numbers.
-        Duplicate index numbers will automatically be skipped.
+        Duplicate numbers will automatically be skipped.
     </p>
+
 
     <form
         method="post"
@@ -708,22 +1302,46 @@ include '../includes/header.php';
         <input
             type="hidden"
             name="csrf_token"
-            value="<?php echo htmlspecialchars($csrf); ?>"
+            value="<?php
+                echo htmlspecialchars(
+                    $csrf
+                );
+            ?>"
         >
+
+
+        <label>
+            CSV File
+        </label>
 
         <input
             type="file"
             name="csv_file"
-            accept=".csv"
+            accept=".csv,text/csv"
             required
         >
+
+
+        <p class="help-text">
+            Maximum file size: 5MB.
+            The first column should contain index numbers.
+        </p>
+
 
         <button
             type="submit"
             class="btn"
         >
-            Upload and Extract
+            Import Students
         </button>
+
+
+        <a
+            href="students.php?template=csv"
+            class="btn gold"
+        >
+            Download CSV Template
+        </a>
 
     </form>
 
@@ -736,39 +1354,49 @@ include '../includes/header.php';
 
 <div class="card">
 
-    <h2>Or Enter Index Numbers Manually</h2>
+    <h2>
+        Add Students Manually
+    </h2>
 
     <p class="lead">
-        Enter one index number per line.
-        Commas, spaces and semicolons are also supported.
+        Enter multiple index numbers separated by spaces,
+        commas, semicolons or new lines.
     </p>
+
 
     <form method="post">
 
         <input
             type="hidden"
             name="csrf_token"
-            value="<?php echo htmlspecialchars($csrf); ?>"
+            value="<?php
+                echo htmlspecialchars(
+                    $csrf
+                );
+            ?>"
         >
 
+
         <label>
-            Index Numbers
+            Student Index Numbers
         </label>
 
         <textarea
             name="manual_list"
-            required
+            rows="7"
             placeholder="Example:
 10234567
 10234568
 10234569"
+            required
         ></textarea>
+
 
         <button
             type="submit"
             class="btn"
         >
-            Add Index Numbers
+            Add Students
         </button>
 
     </form>
@@ -777,46 +1405,66 @@ include '../includes/header.php';
 
 
 <!-- =========================================================
-     EDIT
+     EDIT STUDENT
 ========================================================= -->
 
 <?php if ($edit) { ?>
 
 <div class="card">
 
-    <h2>Edit Index Number</h2>
+    <h2>
+        Edit Student
+    </h2>
+
 
     <form method="post">
 
         <input
             type="hidden"
             name="csrf_token"
-            value="<?php echo htmlspecialchars($csrf); ?>"
+            value="<?php
+                echo htmlspecialchars(
+                    $csrf
+                );
+            ?>"
         >
+
 
         <input
             type="hidden"
             name="edit_id"
-            value="<?php echo intval($edit['id']); ?>"
+            value="<?php
+                echo intval(
+                    $edit['id']
+                );
+            ?>"
         >
+
 
         <label>
             Index Number
         </label>
 
+
         <input
             type="text"
             name="new_index"
-            value="<?php echo htmlspecialchars($edit['index_number']); ?>"
+            value="<?php
+                echo htmlspecialchars(
+                    $edit['index_number']
+                );
+            ?>"
             required
         >
+
 
         <button
             type="submit"
             class="btn"
         >
-            Save
+            Save Changes
         </button>
+
 
         <a
             href="students.php"
@@ -833,262 +1481,392 @@ include '../includes/header.php';
 
 
 <!-- =========================================================
-     STUDENT TABLE
+     STUDENT LIST
 ========================================================= -->
 
 <div class="card">
 
-<h2>
-    Registered Students
-    (<?php echo number_format($totalStudents); ?>)
-</h2>
+    <h2>
+        Registered Students
+    </h2>
 
-<?php if (count($students) > 0) { ?>
 
-<form
-    method="post"
-    id="bulkForm"
-    onsubmit="return confirmBulkDelete();"
->
+    <?php if (count($students) > 0) { ?>
 
-    <input
-        type="hidden"
-        name="csrf_token"
-        value="<?php echo htmlspecialchars($csrf); ?>"
+
+    <form
+        method="post"
+        id="bulkForm"
+        onsubmit="return confirmBulkDelete();"
     >
 
-    <input
-        type="hidden"
-        name="bulk_delete"
-        value="1"
-    >
+        <input
+            type="hidden"
+            name="csrf_token"
+            value="<?php
+                echo htmlspecialchars(
+                    $csrf
+                );
+            ?>"
+        >
 
-    <div style="margin-bottom:15px;">
+
+        <input
+            type="hidden"
+            name="bulk_delete"
+            value="1"
+        >
+
 
         <button
             type="submit"
             class="btn red"
-            id="bulkDeleteButton"
         >
             Delete Selected
         </button>
 
-    </div>
 
-    <table>
+        <div class="student-table-wrapper">
 
-        <tr>
+            <table class="student-table">
 
-            <th>
-                <input
-                    type="checkbox"
-                    id="selectAll"
-                    onclick="toggleAll(this)"
-                >
-            </th>
+                <thead>
 
-            <th>
-                Index Number
-            </th>
+                    <tr>
 
-            <th>
-                Actions
-            </th>
+                        <th>
+                            <input
+                                type="checkbox"
+                                id="selectAll"
+                                onclick="toggleAll(this)"
+                            >
+                        </th>
 
-        </tr>
+                        <th>
+                            #
+                        </th>
 
-        <?php foreach ($students as $st) { ?>
+                        <th>
+                            Index Number
+                        </th>
 
-        <tr>
+                        <th>
+                            Actions
+                        </th>
 
-            <td>
+                    </tr>
 
-                <input
-                    type="checkbox"
-                    class="studentCheckbox"
-                    name="student_ids[]"
-                    value="<?php echo intval($st['id']); ?>"
-                >
+                </thead>
 
-            </td>
 
-            <td>
-                <?php echo htmlspecialchars($st['index_number']); ?>
-            </td>
+                <tbody>
 
-            <td>
+                <?php
 
-                <a
-                    class="btn small gold"
-                    href="students.php?edit=<?php echo intval($st['id']); ?>"
-                >
-                    Edit
-                </a>
+                $number =
+                    $offset + 1;
 
-                <form
-                    method="post"
-                    style="display:inline;"
-                    onsubmit="return confirm('Remove this index number?');"
-                >
+                foreach (
+                    $students
+                    as $student
+                ) {
 
-                    <input
-                        type="hidden"
-                        name="csrf_token"
-                        value="<?php echo htmlspecialchars($csrf); ?>"
-                    >
+                ?>
 
-                    <input
-                        type="hidden"
-                        name="delete_id"
-                        value="<?php echo intval($st['id']); ?>"
-                    >
+                    <tr>
 
-                    <button
-                        type="submit"
-                        class="btn small red"
-                    >
-                        Remove
-                    </button>
+                        <td>
 
-                </form>
+                            <input
+                                type="checkbox"
+                                class="studentCheckbox"
+                                name="student_ids[]"
+                                value="<?php
+                                    echo intval(
+                                        $student['id']
+                                    );
+                                ?>"
+                            >
 
-            </td>
+                        </td>
 
-        </tr>
+
+                        <td>
+                            <?php
+                            echo $number++;
+                            ?>
+                        </td>
+
+
+                        <td>
+
+                            <strong>
+
+                                <?php
+                                echo htmlspecialchars(
+                                    $student[
+                                        'index_number'
+                                    ]
+                                );
+                                ?>
+
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="student-actions">
+
+
+                                <a
+                                    href="students.php?edit=<?php
+                                        echo intval(
+                                            $student['id']
+                                        );
+                                    ?>"
+                                    class="btn small gold"
+                                >
+                                    Edit
+                                </a>
+
+
+                                <button
+                                    type="submit"
+                                    form="delete-<?php
+                                        echo intval(
+                                            $student['id']
+                                        );
+                                    ?>"
+                                    class="btn small red"
+                                >
+                                    Remove
+                                </button>
+
+                            </div>
+
+
+                            <!-- Separate delete form -->
+
+                            <form
+                                method="post"
+                                id="delete-<?php
+                                    echo intval(
+                                        $student['id']
+                                    );
+                                ?>"
+                                style="display:none;"
+                                onsubmit="return confirm(
+                                    'Remove this student?'
+                                );"
+                            >
+
+                                <input
+                                    type="hidden"
+                                    name="csrf_token"
+                                    value="<?php
+                                        echo htmlspecialchars(
+                                            $csrf
+                                        );
+                                    ?>"
+                                >
+
+
+                                <input
+                                    type="hidden"
+                                    name="delete_id"
+                                    value="<?php
+                                        echo intval(
+                                            $student['id']
+                                        );
+                                    ?>"
+                                >
+
+                            </form>
+
+                        </td>
+
+                    </tr>
+
+                <?php } ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </form>
+
+
+    <!-- =====================================================
+         PAGINATION
+    ====================================================== -->
+
+    <div class="student-pagination">
+
+        <?php if ($page > 1) { ?>
+
+            <a
+                href="students.php?search=<?php
+                    echo urlencode($search);
+                ?>&page=<?php
+                    echo $page - 1;
+                ?>"
+            >
+                Previous
+            </a>
 
         <?php } ?>
 
-    </table>
 
-</form>
+        <?php
+
+        $startPage =
+            max(
+                1,
+                $page - 3
+            );
+
+        $endPage =
+            min(
+                $totalPages,
+                $page + 3
+            );
 
 
-<!-- =========================================================
-     PAGINATION
-========================================================= -->
+        for (
+            $i = $startPage;
+            $i <= $endPage;
+            $i++
+        ) {
 
-<?php if ($totalPages > 1) { ?>
+        ?>
 
-<div style="margin-top:20px;">
+            <?php if ($i == $page) { ?>
 
-    <p>
+                <span class="current">
+                    <?php echo $i; ?>
+                </span>
+
+            <?php } else { ?>
+
+                <a
+                    href="students.php?search=<?php
+                        echo urlencode(
+                            $search
+                        );
+                    ?>&page=<?php
+                        echo $i;
+                    ?>"
+                >
+                    <?php echo $i; ?>
+                </a>
+
+            <?php } ?>
+
+        <?php } ?>
+
+
+        <?php if ($page < $totalPages) { ?>
+
+            <a
+                href="students.php?search=<?php
+                    echo urlencode(
+                        $search
+                    );
+                ?>&page=<?php
+                    echo $page + 1;
+                ?>"
+            >
+                Next
+            </a>
+
+        <?php } ?>
+
+    </div>
+
+
+    <p class="help-text">
+
         Showing
         <?php echo $showingFrom; ?>
         -
         <?php echo $showingTo; ?>
+
         of
+
         <?php echo $totalStudents; ?>
-        students
+
+        student(s).
+
     </p>
 
-    <?php if ($page > 1) { ?>
 
-        <a
-            class="btn small gold"
-            href="students.php?search=<?php echo urlencode($search); ?>&page=<?php echo $page - 1; ?>"
-        >
-            Previous
-        </a>
-
-    <?php } ?>
+    <?php } else { ?>
 
 
-    <?php
+        <p class="lead">
 
-    /*
-    | Show a maximum of 7 page buttons.
-    */
+            <?php if ($search !== '') { ?>
 
-    $startPage = max(1, $page - 3);
-    $endPage = min($totalPages, $page + 3);
+                No students found for
+                <strong>
+                    <?php
+                    echo htmlspecialchars(
+                        $search
+                    );
+                    ?>
+                </strong>.
 
-    for ($i = $startPage; $i <= $endPage; $i++) {
+            <?php } else { ?>
 
-        if ($i == $page) {
+                No students have been registered yet.
 
-    ?>
+            <?php } ?>
 
-        <span class="btn small">
-            <?php echo $i; ?>
-        </span>
+        </p>
 
-    <?php
-
-        } else {
-
-    ?>
-
-        <a
-            class="btn small gold"
-            href="students.php?search=<?php echo urlencode($search); ?>&page=<?php echo $i; ?>"
-        >
-            <?php echo $i; ?>
-        </a>
-
-    <?php
-
-        }
-    }
-
-    ?>
-
-
-    <?php if ($page < $totalPages) { ?>
-
-        <a
-            class="btn small gold"
-            href="students.php?search=<?php echo urlencode($search); ?>&page=<?php echo $page + 1; ?>"
-        >
-            Next
-        </a>
 
     <?php } ?>
 
 </div>
 
-<?php } ?>
-
-
-<?php } else { ?>
-
-    <p class="lead">
-        <?php if ($search !== '') { ?>
-
-            No students were found matching
-            "<strong><?php echo htmlspecialchars($search); ?></strong>".
-
-        <?php } else { ?>
-
-            No students have been registered yet.
-
-        <?php } ?>
-    </p>
-
-<?php } ?>
-
-</div>
-
-
-<!-- =========================================================
-     JAVASCRIPT
-========================================================= -->
 
 <script>
 
+/*
+|--------------------------------------------------------------------------
+| SELECT / DESELECT ALL
+|--------------------------------------------------------------------------
+*/
+
 function toggleAll(source) {
 
-    var checkboxes =
-        document.querySelectorAll('.studentCheckbox');
+    var boxes =
+        document.querySelectorAll(
+            '.studentCheckbox'
+        );
 
-    for (var i = 0; i < checkboxes.length; i++) {
 
-        checkboxes[i].checked =
+    for (
+        var i = 0;
+        i < boxes.length;
+        i++
+    ) {
+
+        boxes[i].checked =
             source.checked;
-
     }
-
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| BULK DELETE CONFIRMATION
+|--------------------------------------------------------------------------
+*/
 
 function confirmBulkDelete() {
 
@@ -1096,6 +1874,7 @@ function confirmBulkDelete() {
         document.querySelectorAll(
             '.studentCheckbox:checked'
         );
+
 
     if (selected.length === 0) {
 
@@ -1106,12 +1885,15 @@ function confirmBulkDelete() {
         return false;
     }
 
+
     return confirm(
-        'Are you sure you want to remove ' +
+        'Are you sure you want to delete ' +
         selected.length +
         ' selected student(s)?'
     );
-
 }
 
-</script><?php include '../includes/footer.php'; ?>
+</script>
+
+
+<?php include '../includes/footer.php'; ?>
