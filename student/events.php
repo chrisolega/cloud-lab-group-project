@@ -1,4 +1,5 @@
 <?php
+
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_once '../includes/upload.php';
@@ -6,39 +7,60 @@ require_once '../includes/upload.php';
 need_student();
 
 $base = '../';
-$title = 'Events';
+$title = 'Campus Events';
 
-$sid = $_SESSION['student_school'];
+$sid = intval($_SESSION['student_school']);
+
 
 /*
 |--------------------------------------------------------------------------
-| Get School
+| GET SCHOOL
 |--------------------------------------------------------------------------
 */
+
 $q = $db->prepare(
-    'SELECT * FROM schools WHERE id = ?'
+    'SELECT *
+     FROM schools
+     WHERE id = ?
+     LIMIT 1'
 );
 
 $q->execute(array($sid));
 
-$school = $q->fetch();
+$school = $q->fetch(PDO::FETCH_ASSOC);
 
-/*
-|--------------------------------------------------------------------------
-| Search
-|--------------------------------------------------------------------------
-*/
-$search = '';
-
-if (isset($_GET['search'])) {
-    $search = trim($_GET['search']);
+if (!$school) {
+    session_destroy();
+    header('Location: ../index.php');
+    exit;
 }
 
+
 /*
 |--------------------------------------------------------------------------
-| Pagination
+| SEARCH
 |--------------------------------------------------------------------------
 */
+
+$search = isset($_GET['search'])
+    ? trim($_GET['search'])
+    : '';
+
+/*
+| Prevent excessively long searches.
+*/
+
+if (strlen($search) > 100) {
+    $search = substr($search, 0, 100);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PAGINATION
+|--------------------------------------------------------------------------
+*/
+
 $perPage = 6;
 
 $page = isset($_GET['page'])
@@ -52,10 +74,13 @@ if ($page < 1) {
 
 /*
 |--------------------------------------------------------------------------
-| Count Events
+| COUNT EVENTS
 |--------------------------------------------------------------------------
 */
+
 if ($search !== '') {
+
+    $searchTerm = '%' . $search . '%';
 
     $countQ = $db->prepare(
         'SELECT COUNT(*)
@@ -67,8 +92,6 @@ if ($search !== '') {
              OR event_info LIKE ?
          )'
     );
-
-    $searchTerm = '%' . $search . '%';
 
     $countQ->execute(array(
         $sid,
@@ -92,9 +115,16 @@ $totalEvents = intval(
     $countQ->fetchColumn()
 );
 
+
+/*
+|--------------------------------------------------------------------------
+| PAGINATION CALCULATION
+|--------------------------------------------------------------------------
+*/
+
 $totalPages = max(
     1,
-    ceil($totalEvents / $perPage)
+    (int) ceil($totalEvents / $perPage)
 );
 
 if ($page > $totalPages) {
@@ -106,9 +136,10 @@ $offset = ($page - 1) * $perPage;
 
 /*
 |--------------------------------------------------------------------------
-| Get Events
+| GET EVENTS
 |--------------------------------------------------------------------------
 */
+
 if ($search !== '') {
 
     $q = $db->prepare(
@@ -124,11 +155,10 @@ if ($search !== '') {
          LIMIT ? OFFSET ?'
     );
 
-    $searchTerm = '%' . $search . '%';
-
     $q->bindValue(
         1,
-        $sid
+        $sid,
+        PDO::PARAM_INT
     );
 
     $q->bindValue(
@@ -175,7 +205,8 @@ if ($search !== '') {
 
     $q->bindValue(
         1,
-        $sid
+        $sid,
+        PDO::PARAM_INT
     );
 
     $q->bindValue(
@@ -198,9 +229,50 @@ $events = $q->fetchAll(PDO::FETCH_ASSOC);
 
 /*
 |--------------------------------------------------------------------------
-| Display Information
+| STATISTICS
 |--------------------------------------------------------------------------
 */
+
+/*
+| Total events on campus.
+*/
+
+$allEventsQ = $db->prepare(
+    'SELECT COUNT(*)
+     FROM events
+     WHERE school_id = ?'
+);
+
+$allEventsQ->execute(array($sid));
+
+$allEvents = intval(
+    $allEventsQ->fetchColumn()
+);
+
+
+/*
+| Latest event.
+*/
+
+$latestQ = $db->prepare(
+    'SELECT building_name, created_at
+     FROM events
+     WHERE school_id = ?
+     ORDER BY created_at DESC
+     LIMIT 1'
+);
+
+$latestQ->execute(array($sid));
+
+$latestEvent = $latestQ->fetch(PDO::FETCH_ASSOC);
+
+
+/*
+|--------------------------------------------------------------------------
+| DISPLAY INFORMATION
+|--------------------------------------------------------------------------
+*/
+
 $showingFrom = $totalEvents > 0
     ? $offset + 1
     : 0;
@@ -210,42 +282,164 @@ $showingTo = min(
     $totalEvents
 );
 
+
+/*
+|--------------------------------------------------------------------------
+| PAGE URL HELPER
+|--------------------------------------------------------------------------
+*/
+
+function event_page_url($page, $search)
+{
+    $params = array(
+        'page' => $page
+    );
+
+    if ($search !== '') {
+        $params['search'] = $search;
+    }
+
+    return 'events.php?' . http_build_query($params);
+}
+
+
 include '../includes/header.php';
+
 ?>
 
-<h1>
-    Events at
-    <?php echo htmlspecialchars($school['short_name']); ?>
-</h1>
 
-<p class="lead">
-    Here is everything happening on campus and the buildings
-    where you can find them.
-</p>
+<!-- =========================================================
+     PAGE HEADER
+========================================================= -->
+
+<div class="card">
+
+    <h1>
+        Campus Events
+    </h1>
+
+    <p class="lead">
+
+        Events at
+        <strong>
+            <?php
+            echo htmlspecialchars(
+                $school['short_name']
+            );
+            ?>
+        </strong>
+
+        — stay updated with what's happening on campus.
+
+    </p>
+
+</div>
 
 
 <!-- =========================================================
      EVENT STATISTICS
 ========================================================= -->
 
-<div class="card">
+<div class="grid6">
 
-    <h2>Campus Events</h2>
+    <div class="card">
 
-    <p>
-        <strong>
-            <?php echo number_format($totalEvents); ?>
-        </strong>
-        event<?php echo $totalEvents == 1 ? '' : 's'; ?>
+        <h3>
+            Total Events
+        </h3>
 
-        <?php if ($search !== '') { ?>
+        <p style="font-size:28px;font-weight:bold;margin:5px 0;">
 
-            found for
-            "<strong><?php echo htmlspecialchars($search); ?></strong>"
+            <?php
+            echo number_format($allEvents);
+            ?>
+
+        </p>
+
+        <p class="lead">
+            Events posted by your school
+        </p>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>
+            Showing
+        </h3>
+
+        <p style="font-size:28px;font-weight:bold;margin:5px 0;">
+
+            <?php
+            echo number_format($totalEvents);
+            ?>
+
+        </p>
+
+        <p class="lead">
+
+            <?php if ($search !== '') { ?>
+
+                Matching your search
+
+            <?php } else { ?>
+
+                Available events
+
+            <?php } ?>
+
+        </p>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>
+            Latest Update
+        </h3>
+
+        <?php if ($latestEvent) { ?>
+
+            <p style="font-weight:bold;margin:5px 0;">
+
+                <?php
+                echo htmlspecialchars(
+                    $latestEvent['building_name']
+                );
+                ?>
+
+            </p>
+
+            <?php if (!empty($latestEvent['created_at'])) { ?>
+
+                <p class="lead">
+
+                    <?php
+                    echo htmlspecialchars(
+                        date(
+                            'M d, Y',
+                            strtotime(
+                                $latestEvent['created_at']
+                            )
+                        )
+                    );
+                    ?>
+
+                </p>
+
+            <?php } ?>
+
+        <?php } else { ?>
+
+            <p class="lead">
+                No events yet.
+            </p>
 
         <?php } ?>
 
-    </p>
+    </div>
 
 </div>
 
@@ -256,23 +450,33 @@ include '../includes/header.php';
 
 <div class="card">
 
-    <h2>Find an Event</h2>
+    <h2>
+        Find an Event
+    </h2>
+
+    <p class="lead">
+        Search by event information, building name or location.
+    </p>
 
     <form method="get">
 
         <input
             type="text"
             name="search"
-            value="<?php echo htmlspecialchars($search); ?>"
-            placeholder="Search event, building or location..."
+            value="<?php
+                echo htmlspecialchars($search);
+            ?>"
+            maxlength="100"
+            placeholder="e.g. library, seminar, administration..."
         >
 
         <button
             type="submit"
             class="btn"
         >
-            Search
+            🔍 Search Events
         </button>
+
 
         <?php if ($search !== '') { ?>
 
@@ -291,6 +495,39 @@ include '../includes/header.php';
 
 
 <!-- =========================================================
+     SEARCH RESULT MESSAGE
+========================================================= -->
+
+<?php if ($search !== '') { ?>
+
+    <div class="card">
+
+        <p>
+
+            Search results for:
+
+            <strong>
+                "<?php
+                echo htmlspecialchars($search);
+                ?>"
+            </strong>
+
+            —
+
+            <?php
+            echo number_format($totalEvents);
+            ?>
+
+            result<?php echo $totalEvents == 1 ? '' : 's'; ?>
+
+        </p>
+
+    </div>
+
+<?php } ?>
+
+
+<!-- =========================================================
      EVENTS
 ========================================================= -->
 
@@ -300,94 +537,218 @@ include '../includes/header.php';
 
         <?php if ($search !== '') { ?>
 
-            No events were found matching
-            "<strong><?php echo htmlspecialchars($search); ?></strong>".
+            <strong>
+                No events found.
+            </strong>
+
+            <br>
+
+            Try searching with another building name,
+            location or keyword.
 
         <?php } else { ?>
 
-            No events have been posted yet.
-            Check back soon.
+            <strong>
+                No events have been posted yet.
+            </strong>
+
+            <br>
+
+            Check back later for new campus announcements.
 
         <?php } ?>
 
     </div>
+
 
 <?php } else { ?>
 
 
 <div class="event-grid">
 
-<?php foreach ($events as $e) { ?>
+
+<?php foreach ($events as $index => $e) { ?>
+
 
     <div class="event-card">
 
-        <!-- Event / Building Image -->
+
+        <!-- =================================================
+             IMAGE
+        ================================================== -->
 
         <?php
-        $image = pic($e['building_image']);
+
+        $image = pic(
+            $e['building_image']
+        );
+
         ?>
 
+
         <img
-            src="<?php echo htmlspecialchars($image); ?>"
-            alt="<?php echo htmlspecialchars($e['building_name']); ?>"
+            src="<?php
+                echo htmlspecialchars($image);
+            ?>"
+            alt="<?php
+                echo htmlspecialchars(
+                    $e['building_name']
+                );
+            ?>"
             loading="lazy"
         >
 
 
+        <!-- =================================================
+             EVENT BODY
+        ================================================== -->
+
         <div class="body">
 
-            <!-- Building Name -->
+
+            <!-- NEW BADGE -->
+
+            <?php
+
+            $isNew = false;
+
+            if (!empty($e['created_at'])) {
+
+                $eventTime = strtotime(
+                    $e['created_at']
+                );
+
+                /*
+                | Event is considered new for 7 days.
+                */
+
+                if (
+                    $eventTime !== false &&
+                    $eventTime >= strtotime('-7 days')
+                ) {
+
+                    $isNew = true;
+                }
+            }
+
+            ?>
+
+
+            <?php if ($isNew) { ?>
+
+                <span
+                    style="
+                        display:inline-block;
+                        padding:5px 9px;
+                        border-radius:20px;
+                        font-size:12px;
+                        font-weight:bold;
+                        margin-bottom:8px;
+                    "
+                >
+                    NEW
+                </span>
+
+            <?php } ?>
+
+
+            <!-- BUILDING -->
 
             <h3>
-                <?php echo htmlspecialchars($e['building_name']); ?>
+
+                <?php
+                echo htmlspecialchars(
+                    $e['building_name']
+                );
+                ?>
+
             </h3>
 
 
-            <!-- Location -->
+            <!-- LOCATION -->
 
             <div class="loc">
+
                 📍
-                <?php echo htmlspecialchars($e['building_location']); ?>
+
+                <?php
+                echo htmlspecialchars(
+                    $e['building_location']
+                );
+                ?>
+
             </div>
 
 
-            <!-- Event Information -->
+            <!-- EVENT INFORMATION -->
 
             <p>
+
                 <?php
                 echo nl2br(
-                    htmlspecialchars($e['event_info'])
+                    htmlspecialchars(
+                        $e['event_info']
+                    )
                 );
                 ?>
+
             </p>
 
 
-            <!-- Date Posted -->
+            <!-- DATE -->
 
             <?php if (!empty($e['created_at'])) { ?>
 
                 <div
                     class="loc"
-                    style="margin-top:12px;"
+                    style="margin-top:14px;"
                 >
+
                     🕒 Posted:
+
                     <?php
-                    echo htmlspecialchars(
-                        date(
-                            'M d, Y',
-                            strtotime($e['created_at'])
+
+                    $formattedDate = date(
+                        'M d, Y',
+                        strtotime(
+                            $e['created_at']
                         )
                     );
+
+                    echo htmlspecialchars(
+                        $formattedDate
+                    );
+
                     ?>
+
                 </div>
 
             <?php } ?>
+
+
+            <!-- EVENT NUMBER -->
+
+            <div
+                class="loc"
+                style="margin-top:6px;font-size:12px;"
+            >
+
+                Event #<?php
+                echo intval(
+                    $offset + $index + 1
+                );
+                ?>
+
+            </div>
+
 
         </div>
 
     </div>
 
+
 <?php } ?>
+
 
 </div>
 
@@ -398,104 +759,265 @@ include '../includes/header.php';
 
 <?php if ($totalPages > 1) { ?>
 
+
 <div
     class="card"
     style="margin-top:25px;"
 >
 
+
+    <h3>
+        Browse Events
+    </h3>
+
+
     <p>
+
         Showing
-        <?php echo $showingFrom; ?>
+
+        <strong>
+            <?php
+            echo $showingFrom;
+            ?>
+        </strong>
+
         -
-        <?php echo $showingTo; ?>
+
+        <strong>
+            <?php
+            echo $showingTo;
+            ?>
+        </strong>
+
         of
-        <?php echo $totalEvents; ?>
-        events
+
+        <strong>
+            <?php
+            echo $totalEvents;
+            ?>
+        </strong>
+
+        events.
+
     </p>
 
 
-    <?php if ($page > 1) { ?>
-
-        <a
-            class="btn small gold"
-            href="events.php?search=<?php echo urlencode($search); ?>&page=<?php echo $page - 1; ?>"
-        >
-            ← Previous
-        </a>
-
-    <?php } ?>
+    <div
+        style="
+            display:flex;
+            gap:7px;
+            flex-wrap:wrap;
+            align-items:center;
+        "
+    >
 
 
-    <?php
+        <!-- PREVIOUS -->
 
-    /*
-    |--------------------------------------------------------------------------
-    | Page Numbers
-    |--------------------------------------------------------------------------
-    */
+        <?php if ($page > 1) { ?>
 
-    $startPage = max(
-        1,
-        $page - 3
-    );
+            <a
+                class="btn small gold"
+                href="<?php
+                    echo htmlspecialchars(
+                        event_page_url(
+                            $page - 1,
+                            $search
+                        )
+                    );
+                ?>"
+            >
+                ← Previous
+            </a>
 
-    $endPage = min(
-        $totalPages,
-        $page + 3
-    );
+        <?php } ?>
 
-    for (
-        $i = $startPage;
-        $i <= $endPage;
-        $i++
-    ) {
 
-        if ($i == $page) {
+        <!-- PAGE NUMBERS -->
 
-    ?>
+        <?php
 
-        <span class="btn small">
-            <?php echo $i; ?>
-        </span>
+        $startPage = max(
+            1,
+            $page - 3
+        );
 
-    <?php
+        $endPage = min(
+            $totalPages,
+            $page + 3
+        );
 
-        } else {
 
-    ?>
+        /*
+        | First page.
+        */
 
-        <a
-            class="btn small gold"
-            href="events.php?search=<?php echo urlencode($search); ?>&page=<?php echo $i; ?>"
-        >
-            <?php echo $i; ?>
-        </a>
+        if ($startPage > 1) {
 
-    <?php
+        ?>
+
+            <a
+                class="btn small gold"
+                href="<?php
+                    echo htmlspecialchars(
+                        event_page_url(
+                            1,
+                            $search
+                        )
+                    );
+                ?>"
+            >
+                1
+            </a>
+
+            <?php if ($startPage > 2) { ?>
+
+                <span>
+                    ...
+                </span>
+
+            <?php } ?>
+
+        <?php } ?>
+
+
+        <?php
+
+        for (
+            $i = $startPage;
+            $i <= $endPage;
+            $i++
+        ) {
+
+            if ($i == $page) {
+
+        ?>
+
+            <span class="btn small">
+
+                <?php
+                echo $i;
+                ?>
+
+            </span>
+
+        <?php
+
+            } else {
+
+        ?>
+
+            <a
+                class="btn small gold"
+                href="<?php
+                    echo htmlspecialchars(
+                        event_page_url(
+                            $i,
+                            $search
+                        )
+                    );
+                ?>"
+            >
+
+                <?php
+                echo $i;
+                ?>
+
+            </a>
+
+        <?php
+
+            }
 
         }
-    }
 
-    ?>
+        ?>
 
 
-    <?php if ($page < $totalPages) { ?>
+        <!-- LAST PAGE -->
 
-        <a
-            class="btn small gold"
-            href="events.php?search=<?php echo urlencode($search); ?>&page=<?php echo $page + 1; ?>"
-        >
-            Next →
-        </a>
+        <?php if ($endPage < $totalPages) { ?>
 
-    <?php } ?>
+            <?php if ($endPage < $totalPages - 1) { ?>
+
+                <span>
+                    ...
+                </span>
+
+            <?php } ?>
+
+
+            <a
+                class="btn small gold"
+                href="<?php
+                    echo htmlspecialchars(
+                        event_page_url(
+                            $totalPages,
+                            $search
+                        )
+                    );
+                ?>"
+            >
+
+                <?php
+                echo $totalPages;
+                ?>
+
+            </a>
+
+        <?php } ?>
+
+
+        <!-- NEXT -->
+
+        <?php if ($page < $totalPages) { ?>
+
+            <a
+                class="btn small gold"
+                href="<?php
+                    echo htmlspecialchars(
+                        event_page_url(
+                            $page + 1,
+                            $search
+                        )
+                    );
+                ?>"
+            >
+                Next →
+            </a>
+
+        <?php } ?>
+
+
+    </div>
 
 </div>
 
+
 <?php } ?>
 
 
 <?php } ?>
+
+
+<!-- =========================================================
+     STUDENT TIP
+========================================================= -->
+
+<div class="card">
+
+    <h2>
+        💡 Student Notice
+    </h2>
+
+    <p class="lead">
+
+        Check this page regularly for new campus events,
+        announcements and important locations.
+
+    </p>
+
+</div>
 
 
 <?php include '../includes/footer.php'; ?>
