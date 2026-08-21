@@ -11,7 +11,9 @@ include 'includes/header.php';
 <div class="grid6">
 <?php foreach ($schools as $s) { ?>
 <a class="school-card" href="student/login.php?school=<?php echo $s['id']; ?>">
-<div class="badge"><?php echo htmlspecialchars($s['short_name']); ?></div>
+<div class="badge-frame">
+<img class="badge" src="images/schools/<?php echo strtolower(htmlspecialchars($s['short_name'])); ?>.png" alt="<?php echo htmlspecialchars($s['name']); ?> logo">
+</div>
 <h3><?php echo htmlspecialchars($s['name']); ?></h3>
 <p>Tap to sign in with your index number</p>
 </a>

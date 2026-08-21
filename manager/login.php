@@ -65,8 +65,12 @@ if ($sid == 0) {
         href="login.php?school=<?php echo intval($s['id']); ?>"
     >
 
-        <div class="badge">
-            <?php echo htmlspecialchars($s['short_name']); ?>
+        <div class="badge-frame">
+        <img
+            class="badge"
+            src="<?php echo $base; ?>images/schools/<?php echo strtolower(htmlspecialchars($s['short_name'])); ?>.png"
+            alt="<?php echo htmlspecialchars($s['name']); ?> logo"
+        >
         </div>
 
         <h3>
