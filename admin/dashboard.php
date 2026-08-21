@@ -61,7 +61,7 @@ include '../includes/header.php';
     --ad-purple: #7c3aed;
     --ad-danger: #dc2626;
 
-    --ad-bg: #f5f7fb;
+    --ad-bg: #ffffff;
     --ad-card: #ffffff;
     --ad-text: #111827;
     --ad-muted: #6b7280;
@@ -75,16 +75,16 @@ include '../includes/header.php';
     transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Dark Mode */
+/* Dark Mode (follows the site-wide theme toggle) */
 
-.admin-dashboard.dark-mode {
-    --ad-bg: #0f172a;
-    --ad-card: #1e293b;
-    --ad-text: #f8fafc;
-    --ad-muted: #94a3b8;
-    --ad-border: #334155;
+[data-theme="dark"] .admin-dashboard {
+    --ad-bg: var(--bg);
+    --ad-card: var(--surface);
+    --ad-text: var(--text);
+    --ad-muted: var(--text-muted);
+    --ad-border: var(--border);
 
-    background: #0f172a;
+    background: var(--bg);
 }
 
 /* Header */
@@ -509,7 +509,7 @@ include '../includes/header.php';
 
         <div class="ad-actions">
 
-            <button type="button" class="ad-btn" onclick="toggleAdminTheme()">
+            <button type="button" class="ad-btn" onclick="toggleSiteTheme(); syncAdminTheme();">
                 <span id="themeIcon">🌙</span>
                 <span id="themeText">Dark Mode</span>
             </button>
@@ -865,57 +865,26 @@ include '../includes/header.php';
 |--------------------------------------------------------------------------
 */
 
-const adminDashboard = document.getElementById('adminDashboard');
 const themeIcon = document.getElementById('themeIcon');
 const themeText = document.getElementById('themeText');
 
-function applyAdminTheme(theme) {
+function syncAdminTheme() {
 
-    if (theme === 'dark') {
+    const isDark =
+        document.documentElement.getAttribute('data-theme') === 'dark';
 
-        adminDashboard.classList.add('dark-mode');
-
-        themeIcon.textContent = '☀️';
-        themeText.textContent = 'Light Mode';
-
-    } else {
-
-        adminDashboard.classList.remove('dark-mode');
-
-        themeIcon.textContent = '🌙';
-        themeText.textContent = 'Dark Mode';
-    }
-}
-
-
-function toggleAdminTheme() {
-
-    const currentTheme =
-        adminDashboard.classList.contains('dark-mode')
-            ? 'dark'
-            : 'light';
-
-    const newTheme =
-        currentTheme === 'dark'
-            ? 'light'
-            : 'dark';
-
-    localStorage.setItem('adminTheme', newTheme);
-
-    applyAdminTheme(newTheme);
+    themeIcon.textContent = isDark ? '☀️' : '🌙';
+    themeText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Load saved theme
+| Match the site-wide theme (set by includes/header.php) on load
 |--------------------------------------------------------------------------
 */
 
-const savedAdminTheme =
-    localStorage.getItem('adminTheme') || 'light';
-
-applyAdminTheme(savedAdminTheme);
+syncAdminTheme();
 
 
 /*

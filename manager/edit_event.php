@@ -336,7 +336,7 @@ include '../includes/header.php';
 .image-note {
     display: block;
     margin-top: 8px;
-    color: #777;
+    color: var(--text-muted);
     font-size: 13px;
 }
 
@@ -350,7 +350,7 @@ include '../includes/header.php';
 .danger-note {
     margin-top: 10px;
     font-size: 13px;
-    color: #777;
+    color: var(--text-muted);
 }
 
 

@@ -65,45 +65,15 @@ include '../includes/header.php';
     margin-bottom: 15px;
 }
 
-.theme-btn {
-    float: right;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.dark {
-    background: #111827;
-    color: white;
-}
-
-.dark .card {
-    background: #1f2937;
-    color: white;
-}
-
-.dark input,
-.dark select,
-.dark textarea {
-    background: #374151;
-    color: white;
-    border-color: #4b5563;
-}
-
 .char-count {
     text-align: right;
     font-size: 12px;
-    color: #777;
+    color: var(--text-muted);
     margin-top: 4px;
 }
 </style>
 
 <div class="edit-box">
-
-    <button type="button" class="theme-btn" onclick="toggleTheme()">
-        🌙 Dark / ☀️ Light
-    </button>
 
     <div class="card narrow">
 
@@ -194,23 +164,6 @@ include '../includes/header.php';
 
 
 <script>
-
-/* Dark / Light Mode */
-function toggleTheme() {
-    document.body.classList.toggle('dark');
-
-    if (document.body.classList.contains('dark')) {
-        localStorage.setItem('theme', 'dark');
-    } else {
-        localStorage.setItem('theme', 'light');
-    }
-}
-
-/* Remember Theme */
-if (localStorage.getItem('theme') === 'dark') {
-    document.body.classList.add('dark');
-}
-
 
 /* Image Preview */
 document.getElementById('imageInput').addEventListener('change', function () {

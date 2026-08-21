@@ -923,7 +923,7 @@ include '../includes/header.php';
 
 .student-stat {
 
-    background: #fff;
+    background: var(--surface);
 
     padding: 22px;
 
@@ -933,7 +933,9 @@ include '../includes/header.php';
         0 4px 15px rgba(0,0,0,.08);
 
     border-left:
-        5px solid #d4af37;
+        5px solid var(--accent);
+
+    transition: background-color .2s ease;
 }
 
 
@@ -943,7 +945,7 @@ include '../includes/header.php';
 
     font-size: 14px;
 
-    color: #777;
+    color: var(--text-muted);
 }
 
 
@@ -1005,7 +1007,7 @@ include '../includes/header.php';
     padding: 13px;
 
     border-bottom:
-        1px solid #eee;
+        1px solid var(--border);
 
     text-align: left;
 }
@@ -1013,7 +1015,7 @@ include '../includes/header.php';
 
 .student-table th {
 
-    background: #f7f7f7;
+    background: var(--surface-alt);
 
     font-weight: bold;
 }
@@ -1021,7 +1023,7 @@ include '../includes/header.php';
 
 .student-table tr:hover {
 
-    background: #fafafa;
+    background: var(--surface-alt);
 }
 
 
@@ -1066,15 +1068,15 @@ include '../includes/header.php';
 
 .student-pagination a {
 
-    background: #eee;
+    background: var(--surface-alt);
 
-    color: #222;
+    color: var(--text);
 }
 
 
 .student-pagination .current {
 
-    background: #d4af37;
+    background: var(--accent);
 
     color: #fff;
 
@@ -1090,7 +1092,7 @@ include '../includes/header.php';
 
     font-size: 13px;
 
-    color: #777;
+    color: var(--text-muted);
 
     margin-top: 5px;
 }

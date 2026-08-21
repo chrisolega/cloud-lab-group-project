@@ -111,13 +111,6 @@ include '../includes/header.php';
     margin: 0;
 }
 
-.theme-btn {
-    border: none;
-    padding: 9px 13px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
 /* Add Event */
 
 .add-event {
@@ -174,27 +167,6 @@ include '../includes/header.php';
     object-fit: cover;
 }
 
-/* Dark Mode */
-
-body.dark {
-    background: #111827;
-    color: white;
-}
-
-body.dark .card,
-body.dark .event-card {
-    background: #1f2937;
-    color: white;
-}
-
-body.dark input,
-body.dark select,
-body.dark textarea {
-    background: #374151;
-    color: white;
-    border-color: #4b5563;
-}
-
 /* Mobile */
 
 @media(max-width:600px) {
@@ -220,14 +192,6 @@ body.dark textarea {
             <h1>Events</h1>
             <p>Manage events across all schools.</p>
         </div>
-
-        <button
-            type="button"
-            class="theme-btn"
-            onclick="toggleTheme()"
-        >
-            🌙 / ☀️ Theme
-        </button>
 
     </div>
 
@@ -468,31 +432,6 @@ body.dark textarea {
 <script>
 
 /* Dark / Light Mode */
-
-function toggleTheme() {
-
-    document.body.classList.toggle('dark');
-
-    if (document.body.classList.contains('dark')) {
-
-        localStorage.setItem('theme', 'dark');
-
-    } else {
-
-        localStorage.setItem('theme', 'light');
-
-    }
-}
-
-
-/* Remember Theme */
-
-if (localStorage.getItem('theme') === 'dark') {
-
-    document.body.classList.add('dark');
-
-}
-
 
 /* Image Preview */
 

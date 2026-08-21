@@ -414,17 +414,18 @@ include '../includes/header.php';
 }
 
 .stat-card {
-    background: #fff;
+    background: var(--surface);
     border-radius: 12px;
     padding: 22px;
     box-shadow: 0 3px 12px rgba(0,0,0,.08);
-    border-left: 5px solid #d4af37;
+    border-left: 5px solid var(--accent);
+    transition: background-color .2s ease;
 }
 
 .stat-card h3 {
     margin: 0 0 8px;
     font-size: 15px;
-    color: #666;
+    color: var(--text-muted);
 }
 
 .stat-number {
@@ -447,12 +448,13 @@ include '../includes/header.php';
 }
 
 .event-card {
-    background: #fff;
+    background: var(--surface);
     border-radius: 14px;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0,0,0,.08);
     transition: transform .2s ease,
-                box-shadow .2s ease;
+                box-shadow .2s ease,
+                background-color .2s ease;
 }
 
 .event-card:hover {
@@ -478,7 +480,7 @@ include '../includes/header.php';
 
 .event-card .loc {
     font-size: 14px;
-    color: #777;
+    color: var(--accent);
     margin-bottom: 12px;
 }
 
@@ -531,16 +533,16 @@ include '../includes/header.php';
 }
 
 .pagination a {
-    background: #eee;
-    color: #222;
+    background: var(--surface-alt);
+    color: var(--text);
 }
 
 .pagination a:hover {
-    background: #ddd;
+    background: var(--border);
 }
 
 .pagination .active {
-    background: #d4af37;
+    background: var(--accent);
     color: #fff;
     font-weight: bold;
 }

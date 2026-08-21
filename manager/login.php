@@ -184,7 +184,7 @@ if ($sid == 0) {
     text-decoration: none;
     color: inherit;
 
-    background: #fff;
+    background: var(--surface);
 
     border-radius: 14px;
 
@@ -195,9 +195,11 @@ if ($sid == 0) {
 
     transition:
         transform .2s ease,
-        box-shadow .2s ease;
+        box-shadow .2s ease,
+        background-color .2s ease,
+        border-color .2s ease;
 
-    border: 1px solid #eee;
+    border: 1px solid var(--border);
 }
 
 .school-card:hover {
@@ -217,12 +219,12 @@ if ($sid == 0) {
 
     border-radius: 8px;
 
-    background: #f4f2e6;
-    border: 1px solid #eee;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
 
     padding: 6px;
 
-    margin-bottom: 15px;
+    margin: 0 auto 15px auto;
 }
 
 .school-badge img {
@@ -237,7 +239,7 @@ if ($sid == 0) {
 }
 
 .school-card p {
-    color: #777;
+    color: var(--text-muted);
     margin: 0;
 }
 
@@ -248,7 +250,8 @@ if ($sid == 0) {
 
     border-radius: 20px;
 
-    background: #f1f1f1;
+    background: var(--surface-alt);
+    color: var(--text-muted);
 
     font-size: 13px;
 
@@ -266,7 +269,7 @@ if ($sid == 0) {
 }
 
 .selected-school {
-    background: #f7f7f7;
+    background: var(--surface-alt);
 
     border-radius: 10px;
 
@@ -286,13 +289,13 @@ if ($sid == 0) {
 
 .password-wrapper input {
     width: 100%;
-    padding-right: 80px;
+    padding-right: 46px;
 }
 
 .password-toggle {
     position: absolute;
 
-    right: 8px;
+    right: 6px;
     top: 50%;
 
     transform: translateY(-50%);
@@ -300,12 +303,42 @@ if ($sid == 0) {
     border: 0;
 
     background: transparent;
+    color: var(--text-muted);
 
     cursor: pointer;
 
-    font-size: 13px;
+    padding: 6px;
 
-    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    border-radius: 6px;
+}
+
+.password-toggle:hover {
+    background: var(--surface-alt);
+    color: var(--text);
+}
+
+.password-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+.password-toggle .icon-eye-off {
+    display: none;
+}
+
+.password-toggle.is-visible .icon-eye {
+    display: none;
+}
+
+.password-toggle.is-visible .icon-eye-off {
+    display: block;
 }
 
 .login-actions {
@@ -549,8 +582,10 @@ if ($sid == 0) {
                 type="button"
                 class="password-toggle"
                 onclick="togglePassword()"
+                aria-label="Show password"
             >
-                Show
+                <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
             </button>
 
         </div>
@@ -594,19 +629,14 @@ function togglePassword() {
             '.password-toggle'
         );
 
+    var hidden = password.type === 'password';
 
-    if (password.type === 'password') {
-
-        password.type = 'text';
-
-        button.textContent = 'Hide';
-
-    } else {
-
-        password.type = 'password';
-
-        button.textContent = 'Show';
-    }
+    password.type = hidden ? 'text' : 'password';
+    button.setAttribute(
+        'aria-label',
+        hidden ? 'Hide password' : 'Show password'
+    );
+    button.classList.toggle('is-visible', hidden);
 }
 
 </script>

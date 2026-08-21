@@ -38,46 +38,58 @@ include '../includes/header.php';
     margin: 50px auto;
 }
 
-.login-box.dark {
-    background: #1f2937;
-    color: white;
-}
-
-.login-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.theme-btn {
-    border: none;
-    padding: 8px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
 .password-box {
     position: relative;
 }
 
 .password-box input {
-    padding-right: 70px;
+    padding-right: 46px;
     box-sizing: border-box;
     width: 100%;
 }
 
 .show-password {
     position: absolute;
-    right: 10px;
-    top: 9px;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
     border: none;
     background: none;
+    color: var(--text-muted);
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+}
+
+.show-password:hover {
+    background: var(--surface-alt);
+    color: var(--text);
+}
+
+.show-password svg {
+    width: 18px;
+    height: 18px;
+}
+
+.show-password .icon-eye-off {
+    display: none;
+}
+
+.show-password.is-visible .icon-eye {
+    display: none;
+}
+
+.show-password.is-visible .icon-eye-off {
+    display: block;
 }
 
 .strength {
     height: 5px;
-    background: #ddd;
+    background: var(--border);
     border-radius: 5px;
     margin-top: 7px;
 }
@@ -102,14 +114,6 @@ include '../includes/header.php';
                 For system administrators only.
             </p>
         </div>
-
-        <button
-            type="button"
-            class="theme-btn"
-            onclick="toggleTheme()"
-        >
-            🌙
-        </button>
 
     </div>
 
@@ -154,8 +158,10 @@ include '../includes/header.php';
                 class="show-password"
                 onclick="togglePassword()"
                 id="passwordButton"
+                aria-label="Show password"
             >
-                👁️ Show
+                <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
             </button>
 
         </div>
@@ -198,17 +204,14 @@ function togglePassword() {
     const button =
         document.getElementById('passwordButton');
 
-    if (password.type === 'password') {
+    const hidden = password.type === 'password';
 
-        password.type = 'text';
-        button.textContent = '🙈 Hide';
-
-    } else {
-
-        password.type = 'password';
-        button.textContent = '👁️ Show';
-
-    }
+    password.type = hidden ? 'text' : 'password';
+    button.setAttribute(
+        'aria-label',
+        hidden ? 'Hide password' : 'Show password'
+    );
+    button.classList.toggle('is-visible', hidden);
 
 }
 
@@ -256,42 +259,6 @@ document.getElementById('password')
     }
 
 });
-
-
-/* Dark / Light Mode */
-
-function toggleTheme() {
-
-    document.body.classList.toggle('dark');
-
-    const box =
-        document.getElementById('loginBox');
-
-    box.classList.toggle('dark');
-
-    if (document.body.classList.contains('dark')) {
-
-        localStorage.setItem('theme', 'dark');
-
-    } else {
-
-        localStorage.setItem('theme', 'light');
-
-    }
-
-}
-
-
-/* Remember Theme */
-
-if (localStorage.getItem('theme') === 'dark') {
-
-    document.body.classList.add('dark');
-
-    document.getElementById('loginBox')
-        .classList.add('dark');
-
-}
 
 
 /* Loading State */
