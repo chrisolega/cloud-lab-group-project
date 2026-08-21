@@ -1,12 +1,25 @@
 <?php
 
-session_start();
+/*
+|--------------------------------------------------------------------------
+| STUDENT LOGOUT
+|--------------------------------------------------------------------------
+|
+| Completely ends the student's authenticated session.
+|
+*/
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 
 /*
 |--------------------------------------------------------------------------
-| Clear Student Session Data
+| CLEAR STUDENT SESSION DATA
 |--------------------------------------------------------------------------
 */
+
 unset(
     $_SESSION['student_id'],
     $_SESSION['student_index'],
@@ -14,11 +27,50 @@ unset(
     $_SESSION['student_logged_in']
 );
 
+
 /*
 |--------------------------------------------------------------------------
-| Clear Session Cookie
+| CLEAR STUDENT LOGIN SECURITY DATA
 |--------------------------------------------------------------------------
 */
+
+unset(
+    $_SESSION['student_login_attempts'],
+    $_SESSION['student_login_last_attempt'],
+    $_SESSION['student_login_csrf']
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| PREVENT CACHED AUTHENTICATED PAGES
+|--------------------------------------------------------------------------
+*/
+
+header(
+    'Cache-Control: no-store, no-cache, must-revalidate, max-age=0'
+);
+
+header(
+    'Cache-Control: post-check=0, pre-check=0',
+    false
+);
+
+header(
+    'Pragma: no-cache'
+);
+
+header(
+    'Expires: 0'
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| DESTROY SESSION COOKIE
+|--------------------------------------------------------------------------
+*/
+
 if (ini_get('session.use_cookies')) {
 
     $params = session_get_cookie_params();
@@ -34,17 +86,26 @@ if (ini_get('session.use_cookies')) {
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Destroy Session
-|--------------------------------------------------------------------------
-*/
-session_destroy();
 
 /*
 |--------------------------------------------------------------------------
-| Redirect
+| DESTROY SESSION
 |--------------------------------------------------------------------------
 */
-header('Location: ../index.php');
+
+$_SESSION = array();
+
+session_destroy();
+
+
+/*
+|--------------------------------------------------------------------------
+| REDIRECT
+|--------------------------------------------------------------------------
+*/
+
+header(
+    'Location: ../index.php?logout=1'
+);
+
 exit;
